@@ -1,6 +1,6 @@
 [project]
 name = "bridge-d"
-version = "0.1.6"
+version = "0.1.7"
 description = "BRIDGE-D: instrument-as-data scoring and comparison for depression scales"
 readme = "README.md"
 license = { text = "MIT" }

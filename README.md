@@ -20,6 +20,29 @@ small, open, end-to-end workbench that treats an instrument as data.
 it standardises the part everyone rewrites: the instrument definition, the
 scoring rules, the missing-data policy, and the comparison report.
 
+## Positioning
+
+BRIDGE-D aims to become a shared, versioned definition layer for
+psychological instruments — a way for a scale to be described, validated,
+executed, compared and reused by machines and by different research teams.
+
+That is a direction, not a claim about the current release. The path has
+three stages:
+
+| Stage | What it means | Status |
+|---|---|---|
+| **Now** | A local instrument-as-data toolkit: define a scale in TOML, score it, compare it with a co-administered instrument, and validate the statistics against R. | Available |
+| **Next** | Stable identifiers (`id@version`), content hashes, validation status, and a registry that can verify definitions across projects. | Planned |
+| **Long term** | A shared definition layer that different researchers and studies can cite, check and reuse. | Direction |
+
+The point is not saving a few minutes on one analysis. It is that two
+researchers who both say "PHQ-9" can mean the same executable definition,
+with the same scoring rules, the same missing-data policy and a checkable
+provenance.
+
+BRIDGE-D is not a replacement for `psych`, `lavaan` or `equate`, not a
+clinical diagnostic device, and not a registry yet.
+
 ## Install
 
 Requires Python 3.11+ (uses stdlib `tomllib`), numpy and pandas.
