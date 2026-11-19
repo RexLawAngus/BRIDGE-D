@@ -26,8 +26,8 @@ STRINGS: dict[str, dict[str, object]] = {
         "subscale_corr": "Subscale correlations",
         "methods": "Methods paragraph (draft)",
         "methods_text": (
-            "> Scores on the {a} and the {b} were computed with bridged "
-            "v0.1.0 using each instrument's declared scoring and missing-data "
+            "> Scores on the {a} and the {b} were computed with BRIDGE-D "
+            "v{version} using each instrument's declared scoring and missing-data "
             "rules. Agreement was assessed with ICC(2,1) and Bland-Altman "
             "limits of agreement; classification agreement used Cohen's kappa "
             "at each instrument's published cutoffs. Cross-scale linking used "
@@ -82,7 +82,7 @@ STRINGS: dict[str, dict[str, object]] = {
         "subscale_corr": "维度相关",
         "methods": "方法学段落（草稿）",
         "methods_text": (
-            "> 使用 BRIDGE-D v0.1.0，按各量表声明的计分与缺失处理规则，"
+            "> 使用 BRIDGE-D v{version}，按各量表声明的计分与缺失处理规则，"
             "计算 {a} 与 {b} 的得分。采用 ICC(2,1) 与 Bland-Altman 一致性界限"
             "评估一致性；分类一致性采用各量表已发表切点的 Cohen's κ；"
             "跨量表链接采用等百分位链接，Bootstrap 重抽样 {n_boot} 次（n = {n}）。"

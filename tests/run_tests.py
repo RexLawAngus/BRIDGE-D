@@ -237,6 +237,16 @@ def test_report_records_definition_hash() -> None:
     assert a.validation in report
 
 
+def test_package_version_matches_pyproject() -> None:
+    import tomllib
+
+    from bridged import __version__
+
+    with (ROOT / "pyproject.toml").open("rb") as fh:
+        declared = tomllib.load(fh)["project"]["version"]
+    assert __version__ == declared
+
+
 def main() -> int:
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     failures = 0

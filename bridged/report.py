@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from . import __version__
 from .compare import (
     bland_altman,
     cohen_kappa,
@@ -196,7 +197,7 @@ def build_report(
     sections.append(
         f"## {t['methods']}\n\n"  # type: ignore[index]
         + t["methods_text"].format(  # type: ignore[index]
-            a=a.name, b=b.name, n_boot=n_boot, n=n
+            a=a.name, b=b.name, n_boot=n_boot, n=n, version=__version__
         )
         + "\n"
     )

@@ -312,7 +312,9 @@ python validation/level1/run_level1.py
 See [`validation/level1/README.md`](validation/level1/README.md) for the
 tolerances and the latest results. Simulation-based checks (Level 2) live in
 `bridged simulate`. The statistical review packet for the paper is in
-[`docs/statistical_review_packet.md`](docs/statistical_review_packet.md).
+[`docs/statistical_review_packet.md`](docs/statistical_review_packet.md). The
+end-to-end application pipeline (NHANES plus a synthetic companion) is in
+[`validation/application/`](validation/application/README.md).
 
 ## Tests
 

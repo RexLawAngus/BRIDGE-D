@@ -311,7 +311,7 @@ def build_docx(
     _font(run, HEAD_FONT, 12, bold=True)
 
     methods = str(t["methods_text"]).format(  # type: ignore[index]
-        a=a.name, b=b.name, n_boot=n_boot, n=n
+        a=a.name, b=b.name, n_boot=n_boot, n=n, version=__version__
     )
     methods = methods.lstrip("> ").replace("\n> ", "\n")
     paragraph = document.add_paragraph(methods)
