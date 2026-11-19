@@ -211,6 +211,21 @@ the point: it lets you see how much attenuation your design can tolerate.
 Synthetic data is for software validation and sample-size planning. It is not
 evidence about a real instrument.
 
+## Release and archiving
+
+Every version bump gets an immutable snapshot before anything else:
+
+1. Bump `version` in `pyproject.toml`.
+2. Run `python tests/run_tests.py` and `python scripts/check_public.py`.
+3. Commit the bump.
+4. Run `python scripts/archive_version.py`.
+
+The script exports `git archive HEAD` to
+`F:\科研\5.抑郁量表基础设施\库\BRIDGE-D\v<version>-<date>`, writes a
+`RELEASE.json` with the commit hash, and refuses to overwrite an existing
+archive. Only committed files are exported, so `private/` and generated
+artifacts never enter a release.
+
 ## Tests
 
 ```bash
