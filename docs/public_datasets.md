@@ -58,6 +58,9 @@ REB 批准和数据使用协议通常需要导师或机构授权签字。可行�
 
 - Zenodo API：`HAMD AND MADRS` 返回 5 条，其中 4 条是论文，1 条是合成数据。没有找到真实的共同施测个体数据。
 - Dryad API：`HAMD MADRS` 返回 0 条。
+- Kaggle API：`PHQ-9` 搜索返回多个数据集，均为单量表、合成数据或学生问卷；没有同一批人同时施测两个抑郁量表的个体数据。
+- Hugging Face API：请求失败，未获得可用结果。
+- figshare API：返回 403，未纳入。
 - OpenNeuro：ds003709 含 MFQ 与 SHAPS；ds003653 的 participants.json 只有人口学变量，没有量表总分。
 - NESDA：仪器清单 PDF 确认 IDS 与 MADRS，MADRS 出现在住院研究（N4）。
 - CAN-BIND：方案论文 Table 2 确认 MADRS（他评）与 PHQ-9（自评）共同施测。
