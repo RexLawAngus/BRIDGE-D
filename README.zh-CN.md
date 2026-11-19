@@ -267,7 +267,7 @@ Rscript validation/level1/reference.R
 python validation/level1/run_level1.py
 ```
 
-容差和最新结果见 [`validation/level1/README.md`](validation/level1/README.md)。基于模拟的检查（Level 2）在 `bridged simulate` 里。
+容差和最新结果见 [`validation/level1/README.md`](validation/level1/README.md)。基于模拟的检查（Level 2）在 `bridged simulate` 里。论文的统计审查包在 [`docs/statistical_review_packet.md`](docs/statistical_review_packet.md)。
 
 ## 测试
 
