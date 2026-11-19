@@ -6,6 +6,8 @@ rater = "self"
 recall = "past 2 weeks"
 license = "public-domain"
 citation = "Kroenke K, Spitzer RL, Williams JB. J Gen Intern Med. 2001;16(9):606-613."
+source = "Kroenke et al. 2001"
+validation = "source-verified"
 
 [response_scales.phq_0_3]
 levels = [0, 1, 2, 3]

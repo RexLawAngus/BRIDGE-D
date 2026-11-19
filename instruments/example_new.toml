@@ -6,6 +6,8 @@ rater = "self"
 recall = "past 2 weeks"
 license = "CC-BY-4.0"
 note = "Synthetic placeholder used to demonstrate the patch mechanism. Replace with your own items."
+source = "synthetic demo"
+validation = "unverified"
 
 [response_scales.five_point]
 levels = [0, 1, 2, 3, 4]

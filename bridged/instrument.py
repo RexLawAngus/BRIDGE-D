@@ -7,6 +7,8 @@ touching Python.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -63,6 +65,8 @@ class Instrument:
         meta: dict[str, Any] | None = None,
         total_column: str | None = None,
         subscale_columns: dict[str, str] | None = None,
+        source: str | None = None,
+        validation: str = "unverified",
     ) -> None:
         self.id = id
         self.name = name
@@ -77,6 +81,8 @@ class Instrument:
         self.meta = meta or {}
         self.total_column = total_column
         self.subscale_columns = subscale_columns or {}
+        self.source = source
+        self.validation = validation
         self._by_id = {item.id: item for item in items}
 
     # ------------------------------------------------------------------ load
@@ -155,6 +161,8 @@ class Instrument:
                 },
                 total_column=total_column,
                 subscale_columns=subscale_columns,
+                source=raw.get("source"),
+                validation=str(raw.get("validation", "unverified")),
             )
         except KeyError as exc:
             raise ValueError(f"{source}: missing required field {exc}") from exc
@@ -191,7 +199,56 @@ class Instrument:
             )
         if self.missing_min_answered < 1:
             raise ValueError(f"{source}: missing_min_answered must be >= 1")
+        if self.validation not in {
+            "unverified",
+            "numerically-checked",
+            "source-verified",
+        }:
+            raise ValueError(
+                f"{source}: unknown validation status {self.validation!r}; "
+                "use unverified, numerically-checked or source-verified"
+            )
         return self
+
+    def _canonical_definition(self) -> dict[str, Any]:
+        """Scoring-relevant content, excluding provenance fields."""
+        return {
+            "id": self.id,
+            "version": self.version,
+            "items": [
+                {
+                    "id": item.id,
+                    "response": item.response,
+                    "construct": item.construct,
+                    "reverse": item.reverse,
+                    "text": item.text,
+                    "column": item.column,
+                    "kind": item.kind,
+                }
+                for item in self.items
+            ],
+            "response_scales": {
+                name: {"levels": scale.levels, "labels": scale.labels}
+                for name, scale in sorted(self.response_scales.items())
+            },
+            "total_items": self.total_items,
+            "total_column": self.total_column,
+            "subscales": dict(sorted(self.subscales.items())),
+            "subscale_columns": dict(sorted(self.subscale_columns.items())),
+            "cutoffs": self.cutoffs,
+            "missing_min_answered": self.missing_min_answered,
+            "missing_strategy": self.missing_strategy,
+        }
+
+    def definition_hash(self) -> str:
+        """Stable SHA-256 of the scoring definition (not the file bytes)."""
+        payload = json.dumps(
+            self._canonical_definition(),
+            sort_keys=True,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def check_data(self, df: pd.DataFrame) -> None:
         missing: list[str] = []
@@ -284,6 +341,9 @@ class Instrument:
             "missing_min_answered": self.missing_min_answered,
             "total_column": self.total_column,
             "subscale_columns": self.subscale_columns,
+            "source": self.source,
+            "validation": self.validation,
+            "sha256": self.definition_hash(),
         }
 
     def __repr__(self) -> str:  # pragma: no cover - cosmetic

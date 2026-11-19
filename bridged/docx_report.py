@@ -163,9 +163,10 @@ def build_docx(
 
     intro = document.add_paragraph()
     intro.add_run(
-        f"{a.name}（{a.id} v{a.version}，{len(a.items)} 个条目）与 "
-        f"{b.name}（{b.id} v{b.version}，{len(b.items)} 个条目），"
-        f"完整配对 n = {n}。"
+        f"{a.name}（{a.id}@{a.version}，sha256: {a.definition_hash()[:12]}，"
+        f"{len(a.items)} 个条目）与 "
+        f"{b.name}（{b.id}@{b.version}，sha256: {b.definition_hash()[:12]}，"
+        f"{len(b.items)} 个条目），完整配对 n = {n}。"
     ).font.size = Pt(10.5)
 
     desc = descriptives({a.id: total_a, b.id: total_b})

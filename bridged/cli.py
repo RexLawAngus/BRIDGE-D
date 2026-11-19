@@ -253,7 +253,11 @@ def main(argv: list[str] | None = None) -> int:
         data = pd.read_csv(args.data)
         scores = instrument.score(data)
         scores.to_csv(args.out, index=False)
-        print(f"wrote {args.out} ({len(scores)} rows)")
+        print(
+            f"wrote {args.out} ({len(scores)} rows) "
+            f"[{instrument.id}@{instrument.version} "
+            f"sha256:{instrument.definition_hash()[:12]}]"
+        )
         return 0
 
     if args.command == "compare":

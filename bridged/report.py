@@ -63,11 +63,21 @@ def build_report(
     sections.append(f"# {t['title'].format(a=a.name, b=b.name)}\n")  # type: ignore[index]
     sections.append(
         t["meta"].format(  # type: ignore[index]
-            id=a.id, version=a.version, n=len(a.items), missing=a.missing_strategy
+            id=a.id,
+            version=a.version,
+            n=len(a.items),
+            missing=a.missing_strategy,
+            validation=a.validation,
+            hash=a.definition_hash()[:12],
         )
         + "\n"
         + t["meta"].format(  # type: ignore[index]
-            id=b.id, version=b.version, n=len(b.items), missing=b.missing_strategy
+            id=b.id,
+            version=b.version,
+            n=len(b.items),
+            missing=b.missing_strategy,
+            validation=b.validation,
+            hash=b.definition_hash()[:12],
         )
         + "\n"
         + t["complete_pairs"].format(n=n)  # type: ignore[index]

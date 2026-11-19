@@ -143,6 +143,21 @@ label = "moderate"
 min = 5
 ```
 
+Every definition should also declare its provenance and validation status:
+
+```toml
+id = "my_scale"
+version = "1.0.0"
+source = "Author et al. 2024"
+validation = "unverified"   # unverified | numerically-checked | source-verified
+```
+
+`bridged validate` prints the definition hash (`sha256`), and every report
+records `id@version` plus the first 12 hex characters. Changing an item,
+response scale, scoring rule, cutoff or missing-data rule changes the hash;
+editing comments or whitespace does not. `source` and `validation` describe
+provenance and are not part of the hash.
+
 ### Column-based
 
 If your export already contains scores, point at the column instead of summing

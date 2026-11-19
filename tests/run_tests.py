@@ -187,6 +187,56 @@ def test_simulation_writes_recovery_outputs() -> None:
     assert summary["replications"] == 3
 
 
+def _minimal_raw(validation: str = "unverified") -> dict:
+    return {
+        "id": "mini",
+        "version": "1.0.0",
+        "validation": validation,
+        "items": [{"id": "q1", "response": "s"}],
+        "response_scales": {"s": {"levels": [0, 1]}},
+        "scoring": {"total": {"method": "sum", "items": "all"}},
+    }
+
+
+def test_definition_hash_is_stable() -> None:
+    first = Instrument.from_dict(_minimal_raw()).definition_hash()
+    second = Instrument.from_dict(_minimal_raw()).definition_hash()
+    assert first == second
+
+
+def test_definition_hash_changes_with_reverse_keying() -> None:
+    raw = _minimal_raw()
+    first = Instrument.from_dict(raw).definition_hash()
+    raw["items"][0]["reverse"] = True
+    second = Instrument.from_dict(raw).definition_hash()
+    assert first != second
+
+
+def test_unknown_validation_status_is_rejected() -> None:
+    try:
+        Instrument.from_dict(_minimal_raw("bogus"))
+    except ValueError as exc:
+        assert "unknown validation status" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")
+
+
+def test_report_records_definition_hash() -> None:
+    rng = np.random.default_rng(3)
+    data = pd.DataFrame(
+        {
+            **{f"phq{i}": rng.integers(0, 4, 60) for i in range(1, 10)},
+            **{f"ex{i}": rng.integers(0, 5, 60) for i in range(1, 13)},
+        }
+    )
+    a = Instrument.load(ROOT / "instruments" / "phq9.toml")
+    b = Instrument.load(ROOT / "instruments" / "example_new.toml")
+    report = build_report(a, b, data, lang="en")
+    assert "sha256=" in report
+    assert a.definition_hash()[:12] in report
+    assert a.validation in report
+
+
 def main() -> int:
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     failures = 0

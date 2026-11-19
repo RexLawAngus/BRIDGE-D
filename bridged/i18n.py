@@ -5,7 +5,7 @@ from __future__ import annotations
 STRINGS: dict[str, dict[str, object]] = {
     "en": {
         "title": "{a} vs {b}",
-        "meta": "- `{id}` v{version}: {n} items, missing={missing}",
+        "meta": "- `{id}` v{version}: {n} items, missing={missing}, validation={validation}, sha256={hash}",
         "complete_pairs": "- complete pairs: **n = {n}**",
         "descriptives": "Descriptives",
         "reliability": "Internal consistency",
@@ -61,7 +61,7 @@ STRINGS: dict[str, dict[str, object]] = {
     },
     "zh": {
         "title": "{a} 与 {b} 对比",
-        "meta": "- `{id}` v{version}：{n} 个条目，缺失处理={missing}",
+        "meta": "- `{id}` v{version}：{n} 个条目，缺失处理={missing}，验证状态={validation}，sha256={hash}",
         "complete_pairs": "- 完整配对：**n = {n}**",
         "descriptives": "描述统计",
         "reliability": "内部一致性",

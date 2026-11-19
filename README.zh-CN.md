@@ -124,6 +124,17 @@ label = "moderate"
 min = 5
 ```
 
+每个定义还应该声明来源与验证状态：
+
+```toml
+id = "my_scale"
+version = "1.0.0"
+source = "Author et al. 2024"
+validation = "unverified"   # unverified | numerically-checked | source-verified
+```
+
+`bridged validate` 会打印定义哈希（`sha256`），每份报告会记录 `id@version` 和哈希前 12 位。条目、反应选项、计分规则、切点或缺失规则有任何改动，哈希都会变；改注释或空白不会。`source` 和 `validation` 是来源元数据，不参与哈希。
+
 ### 基于列
 
 如果导出文件里已经有分数，直接指向列，而不是把条目加起来。这样，带自定义计分引擎的量表（游戏、任务、厂商导出）不用重新实现任何东西就能接入：

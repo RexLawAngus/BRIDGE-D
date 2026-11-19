@@ -6,6 +6,8 @@ rater = "clinician"
 recall = "past week"
 license = "public-domain"
 citation = "Hamilton M. J Neurol Neurosurg Psychiatry. 1960;23:56-62."
+source = "Hamilton 1960"
+validation = "numerically-checked"
 
 [response_scales.hamd_0_4]
 levels = [0, 1, 2, 3, 4]
