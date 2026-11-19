@@ -6,10 +6,18 @@ date-released: 2026-11-19
 license: MIT
 type: software
 repository-code: "https://github.com/RexLawAngus/BRIDGE-D"
+keywords:
+  - psychometrics
+  - depression
+  - scale scoring
+  - cross-instrument comparison
+  - equipercentile linking
+  - reproducible research
 abstract: >
   Instrument-as-data toolkit for scoring and comparing co-administered
   depression scales, with agreement, classification and equipercentile
   linking, plus a known-truth simulation module for software validation
   and sample-size planning.
 authors:
-  - name: "BRIDGE-D contributors"
+  - family-names: "She"
+    given-names: "Xiaoyu"
