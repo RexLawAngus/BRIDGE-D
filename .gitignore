@@ -10,3 +10,5 @@ private/
 tests/_tmp/
 sim/
 sim_*/
+releases/
+.archive-dir

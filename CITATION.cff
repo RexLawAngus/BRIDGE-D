@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use BRIDGE-D in your research, please cite this repository."
 title: "BRIDGE-D: Bridging Instruments for Depression"
-version: 0.1.0
+version: 0.1.1
 date-released: 2026-11-19
 license: MIT
 type: software

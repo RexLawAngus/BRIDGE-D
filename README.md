@@ -20,11 +20,26 @@ scoring rules, the missing-data policy, and the comparison report.
 
 ## Install
 
+Requires Python 3.11+ (uses stdlib `tomllib`), numpy and pandas.
+
 ```bash
 pip install -e .
+bridged --help
 ```
 
-Requires Python 3.11+ (uses stdlib `tomllib`), numpy and pandas.
+If `bridged` is not on your PATH (common on Windows), use the module entry
+point instead:
+
+```bash
+python -m bridged --help
+```
+
+You can also skip installation entirely and run from the repository root:
+
+```bash
+pip install numpy pandas
+python -m bridged --help
+```
 
 ## Quickstart
 
@@ -220,11 +235,17 @@ Every version bump gets an immutable snapshot before anything else:
 3. Commit the bump.
 4. Run `python scripts/archive_version.py`.
 
-The script exports `git archive HEAD` to
-`F:\科研\5.抑郁量表基础设施\库\BRIDGE-D\v<version>-<date>`, writes a
-`RELEASE.json` with the commit hash, and refuses to overwrite an existing
+The script exports `git archive HEAD` to `releases/v<version>-<date>`, writes
+a `RELEASE.json` with the commit hash, and refuses to overwrite an existing
 archive. Only committed files are exported, so `private/` and generated
 artifacts never enter a release.
+
+To archive somewhere else (for example an external drive), pass `--base` or
+put the path in a git-ignored `.archive-dir` file:
+
+```bash
+python scripts/archive_version.py --base "D:/archives/BRIDGE-D"
+```
 
 A post-commit hook does this automatically when `pyproject.toml`'s version
 changes. Enable it once per clone:
