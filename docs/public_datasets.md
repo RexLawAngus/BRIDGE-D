@@ -29,6 +29,21 @@
 | 导师或合作医院的队列 | PHQ-9 + HAMD 或其他组合 | 院内数据使用审批，匿名化后使用 | 最现实，速度取决于审批流程 |
 | 量表原作者或翻译团队 | 中文版量表的常模或验证数据 | 联系作者，签授权协议 | 受版权和授权限制 |
 
+## 学生能否申请 CAN-BIND-01
+
+可以提交，但很难只以学生个人身份拿到数据。Brain-CODE 的 [Data Access Request FAQ](https://indocconsortium.atlassian.net/wiki/spaces/JSDNXT/pages/2001895483/Data+Access+Request+Form+FAQ) 写明：注册账号并签署 Platform Terms of Use 后，任何人都可以提交申请。门槛在材料：
+
+- 项目标题、300 词描述、对脑健康的意义；
+- 本地伦理委员会（REB/IRB）的批准或豁免函；
+- 申请人 CV；
+- 数据传播计划；
+- 签署 Data Use Agreement；
+- 在 Brain-CODE Workspace 内分析，启用多因素认证。
+
+REB 批准和数据使用协议通常需要导师或机构授权签字。可行的做法是请导师作为 PI 申请伦理豁免，你作为 co-investigator 或分析师列名，再由机构签署 DUA。评审最多 2 周，批准后 1 到 2 个工作日开通访问。
+
+国际申请人没有明文禁止，但 DUA 签署和沟通会多花时间。先给 Brain-CODE Help Desk 发邮件，确认你的机构能否签署协议，再准备材料。
+
 ## 结论
 
 优先申请 **CAN-BIND-01**。MADRS 与 PHQ-9 在同一批受试者身上采集，样本 309，正好覆盖 BRIDGE-D 的核心场景：一个他评量表加一个自评量表。Brain-CODE 的申请流程明确，数据治理政策也公开。
