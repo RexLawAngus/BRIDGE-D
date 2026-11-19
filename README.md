@@ -1,5 +1,7 @@
 # BRIDGE-D
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 **Bridging Instruments for Depression — instrument-as-data scoring and comparison for co-administered scales.**
 
 A new scale should not require new code. Write a TOML file describing items,
