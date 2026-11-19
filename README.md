@@ -254,6 +254,21 @@ changes. Enable it once per clone:
 git config core.hooksPath .githooks
 ```
 
+## Validation
+
+Level 1 checks the core statistics against R (`psych`, `irr`) on a fixed
+dataset:
+
+```bash
+python validation/level1/make_fixture.py
+Rscript validation/level1/reference.R
+python validation/level1/run_level1.py
+```
+
+See [`validation/level1/README.md`](validation/level1/README.md) for the
+tolerances and the latest results. Simulation-based checks (Level 2) live in
+`bridged simulate`.
+
 ## Tests
 
 ```bash
