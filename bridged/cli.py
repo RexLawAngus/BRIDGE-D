@@ -212,6 +212,12 @@ def main(argv: list[str] | None = None) -> int:
     p_compare.add_argument(
         "--lang", default="en", choices=["en", "zh"], help="report language"
     )
+    p_compare.add_argument(
+        "--format",
+        default="md",
+        choices=["md", "docx"],
+        help="markdown report or publication-style Word document",
+    )
 
     p_template = sub.add_parser("template", help="write a fillable instrument template")
     p_template.add_argument("--out", required=True)
@@ -253,8 +259,23 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "compare":
         a, b = _load_pair(args.a, args.b)
         data = pd.read_csv(args.data)
-        report = build_report(a, b, data, n_boot=args.bootstrap, lang=args.lang)
-        Path(args.out).write_text(report, encoding="utf-8")
+        if args.format == "docx":
+            try:
+                from .docx_report import build_docx
+            except ImportError:
+                print("docx output needs python-docx: pip install 'bridge-d[docx]'")
+                return 1
+            build_docx(
+                a,
+                b,
+                data,
+                n_boot=args.bootstrap,
+                lang=args.lang,
+                path=args.out,
+            )
+        else:
+            report = build_report(a, b, data, n_boot=args.bootstrap, lang=args.lang)
+            Path(args.out).write_text(report, encoding="utf-8")
         print(f"wrote {args.out}")
         return 0
 

@@ -13,5 +13,6 @@ sim_*/
 releases/
 .archive-dir
 validation/level2/results.csv
+demo_report.docx
 validation/level2/DPQ_J.XPT
 *.XPT

@@ -131,6 +131,28 @@ def test_chinese_report_renders() -> None:
     assert "方法学段落" in report
 
 
+def test_docx_report_writes_tables() -> None:
+    from docx import Document
+
+    from bridged.docx_report import build_docx
+
+    rng = np.random.default_rng(1)
+    data = pd.DataFrame(
+        {
+            **{f"phq{i}": rng.integers(0, 4, 60) for i in range(1, 10)},
+            **{f"ex{i}": rng.integers(0, 5, 60) for i in range(1, 13)},
+        }
+    )
+    a = Instrument.load(ROOT / "instruments" / "phq9.toml")
+    b = Instrument.load(ROOT / "instruments" / "example_new.toml")
+    out = _tmpdir("docx") / "report.docx"
+    build_docx(a, b, data, n_boot=0, lang="zh", path=out)
+    assert out.exists()
+    assert out.stat().st_size > 5000
+    document = Document(out)
+    assert len(document.tables) >= 4
+
+
 def _sim_config() -> SimConfig:
     return SimConfig(
         n=500,

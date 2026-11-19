@@ -62,6 +62,10 @@ bridged compare \
 
 # Chinese report (English is the default)
 bridged compare ... --lang zh
+
+# Publication-style Word report with three-line tables
+pip install -e ".[docx]"
+bridged compare ... --lang zh --format docx --out report.docx
 ```
 
 The report contains descriptives, internal consistency, association,
