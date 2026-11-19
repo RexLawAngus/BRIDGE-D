@@ -1,0 +1,144 @@
+id = "hamd17"
+name = "Hamilton Depression Rating Scale (17 items)"
+version = "1.0.0"
+language = "en"
+rater = "clinician"
+recall = "past week"
+license = "public-domain"
+citation = "Hamilton M. J Neurol Neurosurg Psychiatry. 1960;23:56-62."
+
+[response_scales.hamd_0_4]
+levels = [0, 1, 2, 3, 4]
+
+[response_scales.hamd_0_2]
+levels = [0, 1, 2]
+
+[[items]]
+id = "h1"
+construct = "depressed_mood"
+response = "hamd_0_4"
+text = "Depressed mood"
+
+[[items]]
+id = "h2"
+construct = "guilt"
+response = "hamd_0_4"
+text = "Feelings of guilt"
+
+[[items]]
+id = "h3"
+construct = "suicidality"
+response = "hamd_0_4"
+text = "Suicide"
+
+[[items]]
+id = "h4"
+construct = "sleep"
+response = "hamd_0_2"
+text = "Insomnia, early"
+
+[[items]]
+id = "h5"
+construct = "sleep"
+response = "hamd_0_2"
+text = "Insomnia, middle"
+
+[[items]]
+id = "h6"
+construct = "sleep"
+response = "hamd_0_2"
+text = "Insomnia, late"
+
+[[items]]
+id = "h7"
+construct = "anhedonia"
+response = "hamd_0_4"
+text = "Work and activities"
+
+[[items]]
+id = "h8"
+construct = "psychomotor"
+response = "hamd_0_4"
+text = "Retardation"
+
+[[items]]
+id = "h9"
+construct = "agitation"
+response = "hamd_0_4"
+text = "Agitation"
+
+[[items]]
+id = "h10"
+construct = "anxiety"
+response = "hamd_0_4"
+text = "Anxiety, psychic"
+
+[[items]]
+id = "h11"
+construct = "anxiety"
+response = "hamd_0_4"
+text = "Anxiety, somatic"
+
+[[items]]
+id = "h12"
+construct = "somatic"
+response = "hamd_0_2"
+text = "Somatic symptoms, gastrointestinal"
+
+[[items]]
+id = "h13"
+construct = "somatic"
+response = "hamd_0_2"
+text = "Somatic symptoms, general"
+
+[[items]]
+id = "h14"
+construct = "somatic"
+response = "hamd_0_2"
+text = "Genital symptoms"
+
+[[items]]
+id = "h15"
+construct = "hypochondriasis"
+response = "hamd_0_4"
+text = "Hypochondriasis"
+
+[[items]]
+id = "h16"
+construct = "insight"
+response = "hamd_0_2"
+text = "Loss of insight"
+
+[[items]]
+id = "h17"
+construct = "appetite"
+response = "hamd_0_2"
+text = "Loss of weight"
+
+[scoring]
+missing_min_answered = 15
+missing_strategy = "prorate"
+
+[scoring.total]
+method = "sum"
+items = "all"
+
+[[cutoffs]]
+label = "none"
+min = 0
+
+[[cutoffs]]
+label = "mild"
+min = 8
+
+[[cutoffs]]
+label = "moderate"
+min = 14
+
+[[cutoffs]]
+label = "severe"
+min = 19
+
+[[cutoffs]]
+label = "very_severe"
+min = 23

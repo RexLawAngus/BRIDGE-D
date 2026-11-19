@@ -1,0 +1,16 @@
+[project]
+name = "bridge-d"
+version = "0.1.0"
+description = "BRIDGE-D: instrument-as-data scoring and comparison for depression scales"
+requires-python = ">=3.11"
+dependencies = ["numpy", "pandas"]
+
+[project.scripts]
+bridged = "bridged.cli:main"
+
+[tool.setuptools]
+packages = ["bridged"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

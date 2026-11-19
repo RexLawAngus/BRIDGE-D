@@ -1,0 +1,105 @@
+id = "example_new"
+name = "Example New Instrument"
+version = "0.1.0"
+language = "en"
+rater = "self"
+recall = "past 2 weeks"
+license = "CC-BY-4.0"
+note = "Synthetic placeholder used to demonstrate the patch mechanism. Replace with your own items."
+
+[response_scales.five_point]
+levels = [0, 1, 2, 3, 4]
+labels = ["Never", "Rarely", "Sometimes", "Often", "Always"]
+
+[[items]]
+id = "ex1"
+construct = "depressed_mood"
+response = "five_point"
+
+[[items]]
+id = "ex2"
+construct = "anhedonia"
+response = "five_point"
+
+[[items]]
+id = "ex3"
+construct = "concentration"
+response = "five_point"
+
+[[items]]
+id = "ex4"
+construct = "worthlessness"
+response = "five_point"
+
+[[items]]
+id = "ex5"
+construct = "energy"
+response = "five_point"
+reverse = true
+note = "Reverse-keyed example: higher raw response means better energy."
+
+[[items]]
+id = "ex6"
+construct = "suicidality"
+response = "five_point"
+
+[[items]]
+id = "ex7"
+construct = "sleep"
+response = "five_point"
+
+[[items]]
+id = "ex8"
+construct = "appetite"
+response = "five_point"
+
+[[items]]
+id = "ex9"
+construct = "psychomotor"
+response = "five_point"
+reverse = true
+
+[[items]]
+id = "ex10"
+construct = "somatic"
+response = "five_point"
+
+[[items]]
+id = "ex11"
+construct = "somatic"
+response = "five_point"
+
+[[items]]
+id = "ex12"
+construct = "anxiety"
+response = "five_point"
+
+[scoring]
+missing_min_answered = 10
+missing_strategy = "prorate"
+
+[scoring.total]
+method = "sum"
+items = "all"
+
+[scoring.subscales.cognitive]
+items = ["ex1", "ex2", "ex3", "ex4", "ex6"]
+
+[scoring.subscales.somatic]
+items = ["ex5", "ex7", "ex8", "ex9", "ex10", "ex11", "ex12"]
+
+[[cutoffs]]
+label = "low"
+min = 0
+
+[[cutoffs]]
+label = "moderate"
+min = 12
+
+[[cutoffs]]
+label = "high"
+min = 24
+
+[[cutoffs]]
+label = "very_high"
+min = 36

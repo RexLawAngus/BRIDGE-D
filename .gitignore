@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+report.md
+scores.csv
+examples/demo_cohort.csv
+private/
+tests/_tmp/
+sim/
+sim_*/

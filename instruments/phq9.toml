@@ -1,0 +1,105 @@
+id = "phq9"
+name = "Patient Health Questionnaire-9"
+version = "1.0.0"
+language = "en"
+rater = "self"
+recall = "past 2 weeks"
+license = "public-domain"
+citation = "Kroenke K, Spitzer RL, Williams JB. J Gen Intern Med. 2001;16(9):606-613."
+
+[response_scales.phq_0_3]
+levels = [0, 1, 2, 3]
+labels = [
+  "Not at all",
+  "Several days",
+  "More than half the days",
+  "Nearly every day",
+]
+
+[[items]]
+id = "phq1"
+construct = "anhedonia"
+response = "phq_0_3"
+text = "Little interest or pleasure in doing things"
+
+[[items]]
+id = "phq2"
+construct = "depressed_mood"
+response = "phq_0_3"
+text = "Feeling down, depressed, or hopeless"
+
+[[items]]
+id = "phq3"
+construct = "sleep"
+response = "phq_0_3"
+text = "Trouble falling or staying asleep, or sleeping too much"
+
+[[items]]
+id = "phq4"
+construct = "fatigue"
+response = "phq_0_3"
+text = "Feeling tired or having little energy"
+
+[[items]]
+id = "phq5"
+construct = "appetite"
+response = "phq_0_3"
+text = "Poor appetite or overeating"
+
+[[items]]
+id = "phq6"
+construct = "worthlessness"
+response = "phq_0_3"
+text = "Feeling bad about yourself, or that you are a failure"
+
+[[items]]
+id = "phq7"
+construct = "concentration"
+response = "phq_0_3"
+text = "Trouble concentrating on things"
+
+[[items]]
+id = "phq8"
+construct = "psychomotor"
+response = "phq_0_3"
+text = "Moving or speaking slowly, or being fidgety or restless"
+
+[[items]]
+id = "phq9"
+construct = "suicidality"
+response = "phq_0_3"
+text = "Thoughts that you would be better off dead or of hurting yourself"
+
+[scoring]
+missing_min_answered = 7
+missing_strategy = "prorate"
+
+[scoring.total]
+method = "sum"
+items = "all"
+
+[scoring.subscales.cognitive_affective]
+items = ["phq1", "phq2", "phq6", "phq7", "phq9"]
+
+[scoring.subscales.somatic]
+items = ["phq3", "phq4", "phq5", "phq8"]
+
+[[cutoffs]]
+label = "minimal"
+min = 0
+
+[[cutoffs]]
+label = "mild"
+min = 5
+
+[[cutoffs]]
+label = "moderate"
+min = 10
+
+[[cutoffs]]
+label = "moderately_severe"
+min = 15
+
+[[cutoffs]]
+label = "severe"
+min = 20

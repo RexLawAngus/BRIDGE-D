@@ -1,0 +1,22 @@
+# Example simulation config for `bridged simulate`.
+# The model: two correlated latents (model.latent_r); each item loads on its
+# instrument's latent; ordinal responses are produced with normal thresholds.
+
+n = 200                 # sample size per replication
+seed = 42
+replications = 1        # >1 writes recovery.csv and summary.json
+
+[model]
+latent_r = 0.5          # correlation between the two instruments' latents
+
+[instrument_a]
+id = "sn"
+items = 6
+levels = 5
+loadings = [0.75, 0.55, 0.80, 0.65, 0.70, 0.45]
+
+[instrument_b]
+id = "phq"
+items = 9
+levels = 4
+loading = 0.65

@@ -1,0 +1,6 @@
+id,text,construct,response,levels,reverse,subscale
+q1,I feel down most of the time,depressed_mood,five_point,0-4,false,cognitive
+q2,I still enjoy things I used to enjoy,anhedonia,five_point,0-4,true,cognitive
+q3,I have trouble concentrating,concentration,five_point,0-4,false,cognitive
+q4,I feel tired during the day,fatigue,five_point,0-4,false,somatic
+q5,I sleep badly,sleep,five_point,0-4,false,somatic
