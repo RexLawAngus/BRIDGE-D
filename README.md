@@ -226,6 +226,13 @@ The script exports `git archive HEAD` to
 archive. Only committed files are exported, so `private/` and generated
 artifacts never enter a release.
 
+A post-commit hook does this automatically when `pyproject.toml`'s version
+changes. Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Tests
 
 ```bash

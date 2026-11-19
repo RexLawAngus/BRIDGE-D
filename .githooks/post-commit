@@ -1,0 +1,14 @@
+#!/bin/sh
+# Archive a snapshot whenever the version in pyproject.toml changes.
+# Enable once with: git config core.hooksPath .githooks
+
+if git diff HEAD^ HEAD -- pyproject.toml 2>/dev/null | grep -q '^+version = '; then
+  echo "BRIDGE-D: version bump detected, archiving ..."
+  if command -v python >/dev/null 2>&1; then
+    python scripts/archive_version.py || echo "BRIDGE-D: archive failed; run scripts/archive_version.py manually"
+  elif command -v py >/dev/null 2>&1; then
+    py -3 scripts/archive_version.py || echo "BRIDGE-D: archive failed; run scripts/archive_version.py manually"
+  else
+    echo "BRIDGE-D: python not found; run scripts/archive_version.py manually"
+  fi
+fi

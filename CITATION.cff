@@ -5,7 +5,7 @@ version: 0.1.0
 date-released: 2026-11-19
 license: MIT
 type: software
-repository-code: "https://github.com/REPLACE_ME/BRIDGE-D"
+repository-code: "https://github.com/RexLawAngus/BRIDGE-D"
 abstract: >
   Instrument-as-data toolkit for scoring and comparing co-administered
   depression scales, with agreement, classification and equipercentile
