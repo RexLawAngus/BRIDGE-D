@@ -1,0 +1,55 @@
+id = "nsduh_sds4"
+name = "NSDUH Sheehan Disability Scale role domains"
+version = "2021-2024"
+language = "en"
+rater = "self"
+source = "SAMHSA NSDUH 2021-2024 public-use codebooks"
+validation = "source-verified"
+
+[response_scales.sds_0_10]
+levels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+labels = [
+  "No interference",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "Extreme interference",
+]
+
+[[items]]
+id = "sds_home"
+construct = "non_interpersonal_function"
+response = "sds_0_10"
+text = "Role impairment in home management"
+
+[[items]]
+id = "sds_work"
+construct = "non_interpersonal_function"
+response = "sds_0_10"
+text = "Role impairment in ability to work"
+
+[[items]]
+id = "sds_relationships"
+construct = "interpersonal_function"
+response = "sds_0_10"
+text = "Role impairment in close relationships"
+
+[[items]]
+id = "sds_social"
+construct = "interpersonal_function"
+response = "sds_0_10"
+text = "Role impairment in social life"
+
+[scoring]
+missing_min_answered = 4
+missing_strategy = "listwise"
+
+[scoring.total]
+method = "sum"
+items = "all"

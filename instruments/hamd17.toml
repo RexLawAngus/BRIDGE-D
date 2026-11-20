@@ -107,15 +107,15 @@ text = "Hypochondriasis"
 
 [[items]]
 id = "h16"
-construct = "insight"
+construct = "weight_loss"
 response = "hamd_0_2"
-text = "Loss of insight"
+text = "Loss of weight"
 
 [[items]]
 id = "h17"
-construct = "appetite"
+construct = "insight"
 response = "hamd_0_2"
-text = "Loss of weight"
+text = "Loss of insight"
 
 [scoring]
 missing_min_answered = 15

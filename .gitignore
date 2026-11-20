@@ -15,6 +15,7 @@ releases/
 validation/level2/results.csv
 validation/application/data/
 validation/application/output/
+validation/construct_map_*/output*/
 demo_report.docx
 validation/level2/DPQ_J.XPT
 *.XPT

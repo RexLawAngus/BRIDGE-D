@@ -1,6 +1,6 @@
 # BRIDGE-D 统计审查包
 
-版本：v0.2.2
+版本：v0.3.0
 日期：2026-11-20
 代码：https://github.com/RexLawAngus/BRIDGE-D
 
@@ -23,6 +23,7 @@ R 的统计包负责推断。BRIDGE-D 负责定义和流程的标准化：同一
 - 计分：求和、维度分、反向题、三种缺失策略；
 - 比较：Cronbach's α、Pearson/Spearman、ICC(2,1)、Bland-Altman、Cohen's κ、等百分位链接；
 - 模拟：已知真值的合成数据、恢复研究、样本量规划；
+- Construct Map：Spearman条目相关、PCA或非度量MDS二维坐标、平均连接聚类和Bootstrap稳定性；
 - 报告：Markdown 与中文 Word 三线表。
 
 范围限制：两个量表必须共同施测；不处理复杂抽样权重；不做 CFA、IRT、测量不变性。
@@ -61,6 +62,7 @@ items = "all"
 | Cohen's κ | 不加权；观察一致率与期望一致率 | `compare.cohen_kappa` |
 | 等百分位链接 | 每个 A 分数取中位百分位，再用 B 的分位数线性插值 | `compare.equipercentile` |
 | Bootstrap | 按受试者重抽样；百分位区间；默认关闭，`--bootstrap N` 开启 | `compare.equipercentile` |
+| Construct Map | 条目Spearman相关；PCA载荷或非度量MDS标定；完整相关距离上的平均连接聚类 | `construct_map.py` |
 | 缺失处理 | prorate（`总分 × 条目数 / 已答数`）、zero、listwise；设有最少答题数 | `instrument._aggregate` |
 | 模拟 | 单因子模型；两个潜变量相关 `latent_r`；正态阈值生成有序反应；MCAR/MNAR | `simulate.py` |
 
@@ -126,9 +128,11 @@ items = "all"
 |---|---|
 | `bridged/compare.py` | α、ICC、Bland-Altman、κ、等百分位链接、bootstrap |
 | `bridged/instrument.py` | 计分、缺失规则、定义哈希 |
+| `bridged/construct_map.py` | 条目相关、PCA/MDS坐标、层次聚类和稳定性 |
 | `validation/level1/` | 与 R 对照的固定数据、R 脚本、比较脚本、结果 |
 | `validation/level2/` | NHANES 校准、模拟网格、汇总结果 |
-| `tests/run_tests.py` | 21 个测试，`python tests/run_tests.py` 可直接运行 |
+| `validation/construct_map_*/` | Granwald与NSDUH Construct Map验证 |
+| `tests/run_tests.py` | 27 个可执行测试，`python tests/run_tests.py` 可直接运行 |
 
 ## 8. 反馈方式
 
@@ -138,4 +142,4 @@ items = "all"
 
 ## 9. 版本与许可
 
-BRIDGE-D v0.2.0，commit `df1491b`，MIT 许可。仓库地址：https://github.com/RexLawAngus/BRIDGE-D
+BRIDGE-D v0.3.0，MIT 许可。仓库地址：https://github.com/RexLawAngus/BRIDGE-D

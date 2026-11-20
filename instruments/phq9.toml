@@ -79,6 +79,7 @@ missing_strategy = "prorate"
 [scoring.total]
 method = "sum"
 items = "all"
+rounding = "half-up"
 
 [scoring.subscales.cognitive_affective]
 items = ["phq1", "phq2", "phq6", "phq7", "phq9"]

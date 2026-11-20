@@ -1,0 +1,90 @@
+id = "sds20"
+name = "Zung Self-Rating Depression Scale"
+version = "1.0.0"
+language = "en"
+rater = "self"
+recall = "past week"
+source = "Zung SDS scoring: items 2, 5, 6, 11, 12, 14, 16, 17, 18, and 20 reverse scored"
+validation = "source-verified"
+
+[response_scales.sds_1_4]
+levels = [1, 2, 3, 4]
+
+[[items]]
+id = "sds1"
+response = "sds_1_4"
+[[items]]
+id = "sds2"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds3"
+response = "sds_1_4"
+[[items]]
+id = "sds4"
+response = "sds_1_4"
+[[items]]
+id = "sds5"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds6"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds7"
+response = "sds_1_4"
+[[items]]
+id = "sds8"
+response = "sds_1_4"
+[[items]]
+id = "sds9"
+response = "sds_1_4"
+[[items]]
+id = "sds10"
+response = "sds_1_4"
+[[items]]
+id = "sds11"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds12"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds13"
+response = "sds_1_4"
+[[items]]
+id = "sds14"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds15"
+response = "sds_1_4"
+[[items]]
+id = "sds16"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds17"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds18"
+response = "sds_1_4"
+reverse = true
+[[items]]
+id = "sds19"
+response = "sds_1_4"
+[[items]]
+id = "sds20"
+response = "sds_1_4"
+reverse = true
+
+[scoring]
+missing_min_answered = 16
+missing_strategy = "prorate"
+
+[scoring.total]
+method = "sum"
+items = "all"

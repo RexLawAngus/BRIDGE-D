@@ -1,4 +1,4 @@
-"""Command line interface: validate, score, compare, template, import-items."""
+"""Command line interface for scoring, comparison, simulation, and item maps."""
 
 from __future__ import annotations
 
@@ -239,6 +239,24 @@ def main(argv: list[str] | None = None) -> int:
     p_sim.add_argument("--n", type=int, default=None)
     p_sim.add_argument("--replications", type=int, default=None)
 
+    p_map = sub.add_parser(
+        "construct-map",
+        help="derive an empirical item map from co-administered responses",
+    )
+    p_map.add_argument("--instrument", action="append", required=True)
+    p_map.add_argument("--data", required=True)
+    p_map.add_argument("--out", required=True)
+    p_map.add_argument("--min-pairs", type=int, default=10)
+    p_map.add_argument("--clusters", type=int, default=None)
+    p_map.add_argument("--bootstrap", type=int, default=0)
+    p_map.add_argument("--seed", type=int, default=0)
+    p_map.add_argument(
+        "--embedding",
+        choices=["mds", "pca"],
+        default="mds",
+        help="two-dimensional item calibration method (default: mds)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "validate":
@@ -298,6 +316,32 @@ def main(argv: list[str] | None = None) -> int:
             config, args.out, n=args.n, replications=args.replications
         )
         print(json.dumps(summary, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "construct-map":
+        try:
+            from .construct_map import fit_construct_map, write_construct_map
+        except ImportError as exc:
+            print("construct-map needs: pip install 'bridge-d[map]'", file=sys.stderr)
+            print(f"missing dependency: {exc}", file=sys.stderr)
+            return 1
+        instruments = [Instrument.load(path) for path in args.instrument]
+        data = pd.read_csv(args.data)
+        result = fit_construct_map(
+            instruments,
+            data,
+            min_pairs=args.min_pairs,
+            clusters=args.clusters,
+            bootstrap=args.bootstrap,
+            seed=args.seed,
+            embedding=args.embedding,
+        )
+        written = write_construct_map(result, args.out)
+        print(
+            f"wrote {len(written)} construct-map files to {args.out} "
+            f"({result.metrics['n_items']} items, "
+            f"{result.metrics['n_subjects']} subjects)"
+        )
         return 0
 
     parser.error("unknown command")

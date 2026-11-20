@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 __all__ = ["ResponseScale", "Item", "Instrument"]
@@ -65,6 +66,8 @@ class Instrument:
         meta: dict[str, Any] | None = None,
         total_column: str | None = None,
         subscale_columns: dict[str, str] | None = None,
+        total_rounding: str = "none",
+        subscale_rounding: dict[str, str] | None = None,
         source: str | None = None,
         validation: str = "unverified",
     ) -> None:
@@ -81,6 +84,8 @@ class Instrument:
         self.meta = meta or {}
         self.total_column = total_column
         self.subscale_columns = subscale_columns or {}
+        self.total_rounding = total_rounding
+        self.subscale_rounding = subscale_rounding or {}
         self.source = source
         self.validation = validation
         self._by_id = {item.id: item for item in items}
@@ -119,6 +124,7 @@ class Instrument:
             scoring = raw.get("scoring", {})
             total_spec = scoring.get("total", {"method": "sum", "items": "all"})
             total_column = total_spec.get("column")
+            total_rounding = str(total_spec.get("rounding", "none"))
             all_ids = [item.id for item in items]
             items_spec = total_spec.get("items", "all")
             if items_spec == "all":
@@ -129,12 +135,14 @@ class Instrument:
                 total_items = list(items_spec)
             subscales: dict[str, list[str]] = {}
             subscale_columns: dict[str, str] = {}
+            subscale_rounding: dict[str, str] = {}
             for name, spec in scoring.get("subscales", {}).items():
                 if "column" in spec:
                     subscale_columns[name] = str(spec["column"])
                     subscales[name] = []
                 else:
                     subscales[name] = list(spec.get("items", []))
+                subscale_rounding[name] = str(spec.get("rounding", "none"))
             instrument = cls(
                 id=str(raw["id"]),
                 name=str(raw.get("name", raw["id"])),
@@ -164,6 +172,8 @@ class Instrument:
                 },
                 total_column=total_column,
                 subscale_columns=subscale_columns,
+                total_rounding=total_rounding,
+                subscale_rounding=subscale_rounding,
                 source=raw.get("source"),
                 validation=str(raw.get("validation", "unverified")),
             )
@@ -202,6 +212,15 @@ class Instrument:
             )
         if self.missing_min_answered < 1:
             raise ValueError(f"{source}: missing_min_answered must be >= 1")
+        for group, rounding in {
+            "total": self.total_rounding,
+            **self.subscale_rounding,
+        }.items():
+            if rounding not in {"none", "half-up"}:
+                raise ValueError(
+                    f"{source}: {group} uses unknown rounding {rounding!r}; "
+                    "use none or half-up"
+                )
         if self.validation not in {
             "unverified",
             "numerically-checked",
@@ -238,6 +257,8 @@ class Instrument:
             "total_column": self.total_column,
             "subscales": dict(sorted(self.subscales.items())),
             "subscale_columns": dict(sorted(self.subscale_columns.items())),
+            "total_rounding": self.total_rounding,
+            "subscale_rounding": dict(sorted(self.subscale_rounding.items())),
             "cutoffs": self.cutoffs,
             "missing_min_answered": self.missing_min_answered,
             "missing_strategy": self.missing_strategy,
@@ -289,7 +310,12 @@ class Instrument:
             out[item.id] = values
         return pd.DataFrame(out, index=df.index)
 
-    def _aggregate(self, values: pd.DataFrame, members: list[str]) -> pd.Series:
+    def _aggregate(
+        self,
+        values: pd.DataFrame,
+        members: list[str],
+        rounding: str = "none",
+    ) -> pd.Series:
         subset = values[members]
         answered = subset.notna().sum(axis=1)
         total = subset.sum(axis=1, skipna=True)
@@ -302,6 +328,10 @@ class Instrument:
         # A subscale cannot require more answered items than it contains.
         threshold = min(self.missing_min_answered, len(members))
         scored = scored.mask(answered < threshold)
+        if rounding == "half-up":
+            # Scale scores are normally non-negative. This also handles custom
+            # definitions with negative values by rounding halves away from zero.
+            scored = np.sign(scored) * np.floor(np.abs(scored) + 0.5)
         return scored.astype(float).rename(f"{self.id}_total")
 
     def score(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -313,7 +343,9 @@ class Instrument:
                 df[self.total_column], errors="coerce"
             )
         else:
-            result[f"{self.id}_total"] = self._aggregate(values, self.total_items)
+            result[f"{self.id}_total"] = self._aggregate(
+                values, self.total_items, self.total_rounding
+            )
         for name, members in self.subscales.items():
             key = f"{self.id}_{name}"
             if name in self.subscale_columns:
@@ -321,7 +353,9 @@ class Instrument:
                     df[self.subscale_columns[name]], errors="coerce"
                 )
             else:
-                result[key] = self._aggregate(values, members)
+                result[key] = self._aggregate(
+                    values, members, self.subscale_rounding.get(name, "none")
+                )
         return result
 
     def classify(self, score: pd.Series) -> pd.Series:
@@ -344,6 +378,7 @@ class Instrument:
             "missing_min_answered": self.missing_min_answered,
             "total_column": self.total_column,
             "subscale_columns": self.subscale_columns,
+            "total_rounding": self.total_rounding,
             "source": self.source,
             "validation": self.validation,
             "sha256": self.definition_hash(),

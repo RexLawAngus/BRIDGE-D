@@ -1,0 +1,84 @@
+id = "cesd20"
+name = "Center for Epidemiologic Studies Depression Scale"
+version = "1.0.0"
+language = "en"
+rater = "self"
+recall = "past week"
+source = "NIH CDE CES-D scoring: items 4, 8, 12, and 16 reverse scored"
+validation = "source-verified"
+
+[response_scales.cesd_0_3]
+levels = [0, 1, 2, 3]
+
+[[items]]
+id = "cesd1"
+response = "cesd_0_3"
+[[items]]
+id = "cesd2"
+response = "cesd_0_3"
+[[items]]
+id = "cesd3"
+response = "cesd_0_3"
+[[items]]
+id = "cesd4"
+response = "cesd_0_3"
+reverse = true
+[[items]]
+id = "cesd5"
+response = "cesd_0_3"
+[[items]]
+id = "cesd6"
+response = "cesd_0_3"
+[[items]]
+id = "cesd7"
+response = "cesd_0_3"
+[[items]]
+id = "cesd8"
+response = "cesd_0_3"
+reverse = true
+[[items]]
+id = "cesd9"
+response = "cesd_0_3"
+[[items]]
+id = "cesd10"
+response = "cesd_0_3"
+[[items]]
+id = "cesd11"
+response = "cesd_0_3"
+[[items]]
+id = "cesd12"
+response = "cesd_0_3"
+reverse = true
+[[items]]
+id = "cesd13"
+response = "cesd_0_3"
+[[items]]
+id = "cesd14"
+response = "cesd_0_3"
+[[items]]
+id = "cesd15"
+response = "cesd_0_3"
+[[items]]
+id = "cesd16"
+response = "cesd_0_3"
+reverse = true
+[[items]]
+id = "cesd17"
+response = "cesd_0_3"
+[[items]]
+id = "cesd18"
+response = "cesd_0_3"
+[[items]]
+id = "cesd19"
+response = "cesd_0_3"
+[[items]]
+id = "cesd20"
+response = "cesd_0_3"
+
+[scoring]
+missing_min_answered = 16
+missing_strategy = "prorate"
+
+[scoring.total]
+method = "sum"
+items = "all"

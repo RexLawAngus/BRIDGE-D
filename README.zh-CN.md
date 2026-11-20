@@ -2,9 +2,9 @@
 
 [English](README.md) | 简体中文
 
-**Bridging Instruments for Depression —— 把量表当作数据的计分与跨量表比较工具。**
+**Bridging Instruments for Depression —— 把量表当作数据的计分、跨量表比较与经验条目地图工具。**
 
-新量表不应该需要新代码。写一个 TOML 文件描述条目、反应选项、计分规则和切点，`bridged` 就能计分，并把它和同一批人做过的任何其他量表进行比较。
+新量表不应该需要新代码。写一个 TOML 文件描述条目、反应选项、计分规则和切点，`bridged` 就能计分，并把它和同一批人做过的其他量表进行比较，也能根据回答模式绘制条目地图。
 
 ## 为什么
 
@@ -20,7 +20,7 @@ BRIDGE-D 的长期方向，是成为心理测量工具共享的、版本化的�
 
 | 阶段 | 含义 | 状态 |
 |---|---|---|
-| **现在** | 本地的“量表即数据”工具：用 TOML 定义量表、计分、与共同施测的量表比较，并把统计量与 R 对照验证。 | 已具备 |
+| **现在** | 本地的“量表即数据”工具：用 TOML 定义量表、计分、与共同施测的量表比较，并生成探索性条目地图。 | 已具备 |
 | **接下来** | 稳定标识（`id@version`）、内容哈希、验证状态，以及可跨项目校验定义的 registry。 | 计划中 |
 | **长期** | 不同研究者和研究项目可以引用、核对、复用的共享定义层。 | 方向 |
 
@@ -30,11 +30,14 @@ BRIDGE-D 不替代 `psych`、`lavaan`、`equate`，不是临床诊断设备，�
 
 ## 安装
 
-需要 Python 3.11+（使用标准库 `tomllib`）、numpy 和 pandas。
+需要 Python 3.11+（使用标准库 `tomllib`）、numpy 和 pandas。Construct Map 需要可选的 `map` 依赖。
 
 ```bash
 pip install -e .
 bridged --help
+
+# 安装 PCA/MDS Construct Map 和绘图依赖
+pip install -e ".[map]"
 ```
 
 如果 `bridged` 不在 PATH 里（Windows 常见），用模块入口：
@@ -188,6 +191,30 @@ python scripts/check_public.py
 
 它从 `private/forbidden.txt` 读取禁用词（每行一个），如果这些词出现在 `private/` 之外就失败。
 
+## 经验 Construct Map
+
+可选的 Construct Map 模块根据共同施测条目的回答模式相似性，将条目放入连续的二维空间。当前实现使用 Spearman 条目相关、非度量多维尺度分析和平均连接层次聚类，并用 Bootstrap 估计坐标与聚类稳定性。
+
+```bash
+pip install -e ".[map]"
+
+bridged construct-map \
+  --instrument instruments/phq9.toml \
+  --instrument instruments/example_new.toml \
+  --data examples/demo_cohort.csv \
+  --out map_output \
+  --embedding pca \
+  --bootstrap 200
+```
+
+`--embedding pca` 使用 Spearman 条目相关矩阵的前两个主成分载荷标定坐标，并报告解释方差。默认的 `--embedding mds` 保留非度量 MDS。层次聚类始终使用完整相关距离，不依赖二维投影，以免聚类结果被二维降维进一步压缩。
+
+程序输出条目相关矩阵、距离矩阵、连续坐标、聚类归属、Bootstrap 共聚类概率、地图、树状图和方法报告。坐标表示当前样本中的回答模式相似性。两个坐标轴没有自动赋予心理学名称，也不代表已经发现了普适的症状空间。
+
+可复现验证位于
+[`validation/construct_map_granwald`](validation/construct_map_granwald) 和
+[`validation/construct_map_nsduh`](validation/construct_map_nsduh)。如果二维总图压缩了较窄的内容对比，只传入需要检查的量表即可生成局部图。
+
 ## 模拟
 
 `simulate` 生成真值已知的数据：你设定两个量表潜变量之间的相关、条目载荷、反应格式和样本量；工具写出数据集、总体真值，以及（可选的）多次重复的恢复研究。
@@ -281,6 +308,7 @@ python tests/run_tests.py
 - 原始分数上的 Bland-Altman 假设同一量纲；量程不同时只能作描述性参考，不能当作一致性结论。
 - 切点完全由量表文件声明。发表结果前请对照原始文献核验。
 - 演示量表 `example_new.toml` 是合成的，必须替换。
+- Construct Map 坐标会受到样本、缺失情况和回答分布影响。聚类和距离属于探索性结果，不能直接解释为临床亚型或已验证的潜在构念坐标。
 
 ## 许可
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from unittest import SkipTest
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +28,121 @@ from bridged.simulate import (  # noqa: E402
 )
 
 
+def _map_instruments() -> tuple[Instrument, Instrument]:
+    def build(instrument_id: str, prefix: str) -> Instrument:
+        return Instrument.from_dict(
+            {
+                "id": instrument_id,
+                "version": "1.0.0",
+                "response_scales": {"s": {"levels": [0, 1, 2, 3]}},
+                "items": [
+                    {"id": f"{prefix}{index}", "response": "s"}
+                    for index in range(1, 4)
+                ],
+                "scoring": {"total": {"method": "sum", "items": "all"}},
+            }
+        )
+
+    return build("a", "a"), build("b", "b")
+
+
+def _map_data(n: int = 240) -> pd.DataFrame:
+    rng = np.random.default_rng(91)
+    first = rng.normal(size=n)
+    second = rng.normal(size=n)
+
+    def ordinal(latent: np.ndarray, noise: float) -> np.ndarray:
+        observed = latent + rng.normal(scale=noise, size=n)
+        return np.digitize(observed, [-0.7, 0.0, 0.7])
+
+    return pd.DataFrame(
+        {
+            "a1": ordinal(first, 0.35),
+            "a2": ordinal(first, 0.40),
+            "a3": ordinal(first, 0.45),
+            "b1": ordinal(second, 0.35),
+            "b2": ordinal(second, 0.40),
+            "b3": ordinal(second, 0.45),
+        }
+    )
+
+
+def test_construct_map_recovers_item_neighborhoods() -> None:
+    from bridged.construct_map import fit_construct_map
+
+    instruments = _map_instruments()
+    result = fit_construct_map(instruments, _map_data(), clusters=2, seed=4)
+    assert result.metrics["n_items"] == 6
+    assert result.metrics["clusters"] == 2
+    associations = result.associations
+    within = associations.loc["a@1.0.0/a1", "a@1.0.0/a2"]
+    between = associations.loc["a@1.0.0/a1", "b@1.0.0/b1"]
+    assert within > between + 0.5
+    labels = result.coordinates.set_index("item")["cluster"]
+    assert labels["a@1.0.0/a1"] == labels["a@1.0.0/a2"]
+    assert labels["b@1.0.0/b1"] == labels["b@1.0.0/b2"]
+    assert labels["a@1.0.0/a1"] != labels["b@1.0.0/b1"]
+
+
+def test_construct_map_bootstrap_records_uncertainty() -> None:
+    from bridged.construct_map import fit_construct_map
+
+    result = fit_construct_map(
+        _map_instruments(), _map_data(), clusters=2, bootstrap=5, seed=7
+    )
+    assert result.metrics["bootstrap_valid"] == 5
+    assert result.coassignment is not None
+    assert result.coordinates["dimension_1_sd"].notna().all()
+    assert result.coordinates["cluster_stability"].between(0, 1).all()
+
+
+def test_construct_map_pca_reports_explained_variance() -> None:
+    import json
+
+    from bridged.construct_map import fit_construct_map
+
+    result = fit_construct_map(
+        _map_instruments(), _map_data(), clusters=2, bootstrap=3, seed=7,
+        embedding="pca",
+    )
+    assert result.metrics["embedding"] == "pca"
+    assert 0 < result.metrics["pc1_explained_variance"] < 1
+    assert 0 < result.metrics["pc2_explained_variance"] < 1
+    assert result.metrics["pc12_explained_variance"] <= 1
+    assert result.metrics["bootstrap_valid"] == 3
+    assert "stress" not in result.metrics
+    json.dumps(result.metrics, allow_nan=False)
+    assert np.isfinite(result.coordinates[["dimension_1", "dimension_2"]]).all().all()
+
+
+def test_construct_map_rejects_unknown_embedding() -> None:
+    from bridged.construct_map import fit_construct_map
+
+    try:
+        fit_construct_map(_map_instruments(), _map_data(), embedding="umap")
+    except ValueError as exc:
+        assert "embedding" in str(exc)
+    else:
+        raise AssertionError("unknown embedding should fail")
+
+
+def test_construct_map_auto_cluster_does_not_promote_a_singleton() -> None:
+    from bridged.construct_map import _cluster
+
+    distance = pd.DataFrame(
+        [
+            [0.0, 0.1, 0.1, 1.0],
+            [0.1, 0.0, 0.1, 1.0],
+            [0.1, 0.1, 0.0, 1.0],
+            [1.0, 1.0, 1.0, 0.0],
+        ]
+    )
+    _, labels, cluster_count, silhouette = _cluster(distance)
+    assert cluster_count == 1
+    assert set(labels) == {1}
+    assert np.isnan(silhouette)
+
+
 def test_phq9_scoring() -> None:
     instrument = Instrument.load(ROOT / "instruments" / "phq9.toml")
     data = pd.DataFrame({f"phq{i}": [1] for i in range(1, 10)})
@@ -43,6 +159,24 @@ def test_phq9_prorates_one_missing_item() -> None:
     scores = instrument.score(pd.DataFrame([row]))
     # 8 answered, 1 missing -> 8 * 9 / 8
     assert abs(scores["phq9_total"].iloc[0] - 9.0) < 1e-9
+
+
+def test_phq9_prorated_total_uses_half_up_rounding() -> None:
+    instrument = Instrument.load(ROOT / "instruments" / "phq9.toml")
+    row = {f"phq{i}": np.nan for i in range(1, 10)}
+    row.update({"phq1": 1, "phq2": 1, "phq3": 1, "phq4": 1, "phq5": 1, "phq6": 1, "phq7": 0})
+    scores = instrument.score(pd.DataFrame([row]))
+    # 6 * 9 / 7 = 7.714..., and the PHQ-9 rule rounds to a whole score.
+    assert scores["phq9_total"].iloc[0] == 8.0
+
+
+def test_hamd_item_16_and_17_match_standard_order() -> None:
+    instrument = Instrument.load(ROOT / "instruments" / "hamd17.toml")
+    by_id = {item.id: item for item in instrument.items}
+    assert by_id["h16"].text == "Loss of weight"
+    assert by_id["h16"].construct == "weight_loss"
+    assert by_id["h17"].text == "Loss of insight"
+    assert by_id["h17"].construct == "insight"
 
 
 def test_reverse_keying() -> None:
@@ -132,7 +266,10 @@ def test_chinese_report_renders() -> None:
 
 
 def test_docx_report_writes_tables() -> None:
-    from docx import Document
+    try:
+        from docx import Document
+    except ModuleNotFoundError as exc:
+        raise SkipTest("python-docx optional dependency is not installed") from exc
 
     from bridged.docx_report import build_docx
 
@@ -273,15 +410,20 @@ def test_simulation_missingness_reduces_effective_n() -> None:
 def main() -> int:
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     failures = 0
+    skipped = 0
     for test in tests:
         try:
             test()
+        except SkipTest as exc:
+            skipped += 1
+            print(f"skip {test.__name__}: {exc}")
         except Exception as exc:  # noqa: BLE001
             failures += 1
             print(f"FAIL {test.__name__}: {type(exc).__name__}: {exc}")
         else:
             print(f"ok   {test.__name__}")
-    print(f"\n{len(tests) - failures}/{len(tests)} passed")
+    executed = len(tests) - skipped
+    print(f"\n{executed - failures}/{executed} passed, {skipped} skipped")
     return 1 if failures else 0
 
 

@@ -2,11 +2,13 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-**Bridging Instruments for Depression — instrument-as-data scoring and comparison for co-administered scales.**
+**Bridging Instruments for Depression — instrument-as-data scoring, comparison,
+and empirical item mapping for co-administered scales.**
 
 A new scale should not require new code. Write a TOML file describing items,
 response options, scoring rules and cutoffs; `bridged` scores it and
-compares it against any other instrument administered to the same people.
+compares it against any other instrument administered to the same people, and
+can map item-response similarities across instruments.
 
 ## Why
 
@@ -31,7 +33,7 @@ three stages:
 
 | Stage | What it means | Status |
 |---|---|---|
-| **Now** | A local instrument-as-data toolkit: define a scale in TOML, score it, compare it with a co-administered instrument, and validate the statistics against R. | Available |
+| **Now** | A local instrument-as-data toolkit: define a scale in TOML, score it, compare it with a co-administered instrument, and derive exploratory item maps. | Available |
 | **Next** | Stable identifiers (`id@version`), content hashes, validation status, and a registry that can verify definitions across projects. | Planned |
 | **Long term** | A shared definition layer that different researchers and studies can cite, check and reuse. | Direction |
 
@@ -45,11 +47,15 @@ clinical diagnostic device, and not a registry yet.
 
 ## Install
 
-Requires Python 3.11+ (uses stdlib `tomllib`), numpy and pandas.
+Requires Python 3.11+ (uses stdlib `tomllib`), numpy and pandas. Construct maps
+use the optional `map` dependencies.
 
 ```bash
 pip install -e .
 bridged --help
+
+# Include PCA/MDS construct maps and figures
+pip install -e ".[map]"
 ```
 
 If `bridged` is not on your PATH (common on Windows), use the module entry
@@ -217,6 +223,44 @@ python scripts/check_public.py
 It reads forbidden terms from `private/forbidden.txt` (one per line) and fails
 if any appear outside `private/`.
 
+## Empirical construct map
+
+The optional construct-map module places co-administered items in a continuous
+two-dimensional space based on similarity in their response patterns. It uses
+pairwise Spearman correlations, non-metric multidimensional scaling, and
+average-linkage hierarchical clustering. Bootstrap resampling estimates
+coordinate and cluster stability.
+
+```bash
+pip install -e ".[map]"
+
+bridged construct-map \
+  --instrument instruments/phq9.toml \
+  --instrument instruments/example_new.toml \
+  --data examples/demo_cohort.csv \
+  --out map_output \
+  --embedding pca \
+  --bootstrap 200
+```
+
+`--embedding pca` calibrates item coordinates from the first two loadings of
+the Spearman item-correlation matrix and reports explained variance. The
+default `--embedding mds` retains non-metric MDS. Hierarchical clustering uses
+the full correlation distance under either embedding, so the two-dimensional
+projection does not determine cluster membership.
+
+The output includes association and distance matrices, item coordinates,
+cluster assignments, bootstrap co-assignment probabilities, a map, a
+dendrogram, and a method report. Coordinates reflect empirical response
+similarity in the analyzed sample. The two axes have no automatic
+psychological labels and are not estimates of a universal symptom space.
+
+Reproducible validation examples are in
+[`validation/construct_map_granwald`](validation/construct_map_granwald) and
+[`validation/construct_map_nsduh`](validation/construct_map_nsduh). Pass only
+the instruments needed for a local map when a global two-dimensional map
+compresses a narrower content contrast.
+
 ## Simulation
 
 `simulate` generates data with a known truth: you choose the correlation
@@ -330,6 +374,9 @@ python tests/run_tests.py
 - Cutoffs are whatever the instrument file declares. Verify them against the
   source publication before publishing results.
 - The demo instrument `example_new.toml` is synthetic and must be replaced.
+- Construct-map coordinates depend on the analyzed sample, missingness, and
+  response distributions. Clusters and distances are exploratory results, not
+  clinical subtypes or validated latent-trait coordinates.
 
 ## License
 

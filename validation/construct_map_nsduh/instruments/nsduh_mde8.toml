@@ -1,0 +1,67 @@
+id = "nsduh_mde8"
+name = "NSDUH adult major-depression symptom indicators"
+version = "2021-2024"
+language = "en"
+rater = "self"
+source = "SAMHSA NSDUH 2021-2024 public-use codebooks"
+validation = "source-verified"
+
+[response_scales.absent_present]
+levels = [0, 1]
+labels = ["Does not have symptom", "Has symptom"]
+
+[[items]]
+id = "mde_depressed"
+construct = "cognitive_affective"
+response = "absent_present"
+text = "Sad, empty, or depressed most of day, or discouraged"
+
+[[items]]
+id = "mde_anhedonia"
+construct = "cognitive_affective"
+response = "absent_present"
+text = "Lost interest or pleasure in most things"
+
+[[items]]
+id = "mde_appetite"
+construct = "somatic"
+response = "absent_present"
+text = "Changes in appetite or weight"
+
+[[items]]
+id = "mde_sleep"
+construct = "somatic"
+response = "absent_present"
+text = "Sleep problems"
+
+[[items]]
+id = "mde_psychomotor"
+construct = "somatic"
+response = "absent_present"
+text = "Others noticed restlessness or lethargy"
+
+[[items]]
+id = "mde_fatigue"
+construct = "somatic"
+response = "absent_present"
+text = "Felt tired or low energy nearly every day"
+
+[[items]]
+id = "mde_worthlessness"
+construct = "cognitive_affective"
+response = "absent_present"
+text = "Felt worthless nearly every day"
+
+[[items]]
+id = "mde_concentration"
+construct = "cognitive_affective"
+response = "absent_present"
+text = "Inability to concentrate or make decisions"
+
+[scoring]
+missing_min_answered = 8
+missing_strategy = "listwise"
+
+[scoring.total]
+method = "sum"
+items = "all"
