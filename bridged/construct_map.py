@@ -6,6 +6,7 @@ named psychological axes and should not be interpreted as latent-trait truth.
 
 from __future__ import annotations
 
+import inspect
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -109,7 +110,15 @@ def spearman_associations(
             + "; ".join(pairs)
             + suffix
         )
-    np.fill_diagonal(associations.values, 1.0)
+    # pandas 3 may expose DataFrame arrays as read-only.  Work on an explicit
+    # copy because NumPy's fill_diagonal mutates its input in place.
+    association_values = associations.to_numpy(copy=True)
+    np.fill_diagonal(association_values, 1.0)
+    associations = pd.DataFrame(
+        association_values,
+        index=associations.index,
+        columns=associations.columns,
+    )
     return associations, pairwise_n
 
 
@@ -125,15 +134,22 @@ def _fit_mds(distance: pd.DataFrame, seed: int) -> tuple[np.ndarray, float]:
     # Non-metric MDS treats zero off-diagonal dissimilarities as missing.
     zero = (values == 0.0) & ~np.eye(len(values), dtype=bool)
     values[zero] = np.finfo(float).eps
+    mds_options: dict[str, Any] = {
+        "n_components": 2,
+        "random_state": seed,
+        "n_init": 8,
+        "max_iter": 500,
+        "eps": 1e-6,
+        "normalized_stress": "auto",
+    }
+    if "metric_mds" in inspect.signature(MDS).parameters:
+        # scikit-learn 1.9 split the old ``metric`` option into the input
+        # distance metric and a separate metric/non-metric MDS switch.
+        mds_options.update(metric="precomputed", metric_mds=False, init="random")
+    else:
+        mds_options.update(metric=False, dissimilarity="precomputed")
     model = MDS(
-        n_components=2,
-        metric=False,
-        dissimilarity="precomputed",
-        random_state=seed,
-        n_init=8,
-        max_iter=500,
-        eps=1e-6,
-        normalized_stress="auto",
+        **mds_options,
     )
     coordinates = model.fit_transform(values)
     return coordinates, float(model.stress_)
@@ -195,7 +211,8 @@ def _cluster(
     distance: pd.DataFrame, cluster_count: int | None = None
 ) -> tuple[np.ndarray, np.ndarray, int, float]:
     n_items = len(distance)
-    condensed = squareform(distance.to_numpy(), checks=False)
+    distance_values = distance.to_numpy(copy=True)
+    condensed = squareform(distance_values, checks=False)
     tree = linkage(condensed, method="average")
     if n_items < 3:
         labels = np.ones(n_items, dtype=int)
@@ -214,7 +231,9 @@ def _cluster(
             if pd.Series(labels).value_counts().min() < 2:
                 continue
             score = float(
-                silhouette_score(distance.to_numpy(), labels, metric="precomputed")
+                silhouette_score(
+                    distance_values.copy(), labels, metric="precomputed"
+                )
             )
             scored.append((score, candidate, labels))
         if not scored:
@@ -227,7 +246,7 @@ def _cluster(
         raise ValueError(f"clusters must be between 2 and {n_items - 1}")
     labels = fcluster(tree, t=cluster_count, criterion="maxclust")
     silhouette = float(
-        silhouette_score(distance.to_numpy(), labels, metric="precomputed")
+        silhouette_score(distance_values.copy(), labels, metric="precomputed")
     )
     return tree, labels, cluster_count, silhouette
 
