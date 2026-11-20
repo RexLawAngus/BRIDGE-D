@@ -1,7 +1,7 @@
 # BRIDGE-D 统计审查包
 
-版本：v0.3.0
-日期：2026-11-20
+版本：v0.3.1
+日期：2026-11-21
 代码：https://github.com/RexLawAngus/BRIDGE-D
 
 ## 0. 请你看什么
@@ -132,7 +132,7 @@ items = "all"
 | `validation/level1/` | 与 R 对照的固定数据、R 脚本、比较脚本、结果 |
 | `validation/level2/` | NHANES 校准、模拟网格、汇总结果 |
 | `validation/construct_map_*/` | Granwald与NSDUH Construct Map验证 |
-| `tests/run_tests.py` | 27 个可执行测试，`python tests/run_tests.py` 可直接运行 |
+| `tests/run_tests.py` | 29 个可执行测试，`python tests/run_tests.py` 可直接运行 |
 
 ## 8. 反馈方式
 
@@ -142,4 +142,4 @@ items = "all"
 
 ## 9. 版本与许可
 
-BRIDGE-D v0.3.0，MIT 许可。仓库地址：https://github.com/RexLawAngus/BRIDGE-D
+BRIDGE-D v0.3.1，MIT 许可。仓库地址：https://github.com/RexLawAngus/BRIDGE-D

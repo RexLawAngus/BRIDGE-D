@@ -126,6 +126,25 @@ def test_construct_map_rejects_unknown_embedding() -> None:
         raise AssertionError("unknown embedding should fail")
 
 
+def test_construct_map_accepts_read_only_pandas_arrays() -> None:
+    from bridged.construct_map import spearman_associations
+
+    class ReadOnlyCorrelationFrame(pd.DataFrame):
+        def corr(self, *args, **kwargs):
+            result = super().corr(*args, **kwargs)
+            values = result.to_numpy(copy=True)
+            values.setflags(write=False)
+            return pd.DataFrame(
+                values,
+                index=result.index,
+                columns=result.columns,
+                copy=False,
+            )
+
+    associations, _ = spearman_associations(ReadOnlyCorrelationFrame(_map_data()))
+    assert np.allclose(np.diag(associations), 1.0)
+
+
 def test_construct_map_auto_cluster_does_not_promote_a_singleton() -> None:
     from bridged.construct_map import _cluster
 
