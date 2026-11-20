@@ -44,6 +44,7 @@ class InstrumentSpec:
     loadings: list[float]
     levels: int = 5
     missing_rate: float = 0.0
+    min_answered: int | None = None
 
 
 @dataclass
@@ -75,6 +76,7 @@ def _spec(name: str, raw: dict[str, Any]) -> InstrumentSpec:
         loadings=_loadings(raw, items),
         levels=int(raw.get("levels", 5)),
         missing_rate=float(raw.get("missing_rate", 0.0)),
+        min_answered=int(raw["min_answered"]) if "min_answered" in raw else None,
     )
     if spec.levels < 2:
         raise ValueError(f"{spec.id}: levels must be >= 2")
@@ -82,6 +84,8 @@ def _spec(name: str, raw: dict[str, Any]) -> InstrumentSpec:
         raise ValueError(f"{spec.id}: loadings must be in [0, 1]")
     if not 0.0 <= spec.missing_rate < 1.0:
         raise ValueError(f"{spec.id}: missing_rate must be in [0, 1)")
+    if spec.min_answered is not None and not 1 <= spec.min_answered <= items:
+        raise ValueError(f"{spec.id}: min_answered must be in [1, {items}]")
     return spec
 
 
@@ -140,9 +144,16 @@ def generate(config: SimConfig, n: int, rng: np.random.Generator) -> pd.DataFram
 def _totals(
     data: pd.DataFrame, config: SimConfig
 ) -> tuple[pd.Series, pd.Series]:
-    a_cols = [f"{config.a.id}_{i}" for i in range(1, config.a.items + 1)]
-    b_cols = [f"{config.b.id}_{i}" for i in range(1, config.b.items + 1)]
-    return data[a_cols].sum(axis=1, skipna=True), data[b_cols].sum(axis=1, skipna=True)
+    def score(spec: InstrumentSpec) -> pd.Series:
+        columns = [f"{spec.id}_{i}" for i in range(1, spec.items + 1)]
+        values = data[columns]
+        answered = values.notna().sum(axis=1)
+        total = values.sum(axis=1, skipna=True)
+        scored = total * len(columns) / answered.replace(0, np.nan)
+        threshold = spec.min_answered if spec.min_answered is not None else len(columns)
+        return scored.mask(answered < threshold)
+
+    return score(config.a), score(config.b)
 
 
 def _corr(left: pd.Series, right: pd.Series) -> float:
@@ -232,16 +243,22 @@ def run_simulation(
         data = generate(config, n, rep_rng)
         total_a, total_b = _totals(data, config)
         r_hat = _corr(total_a, total_b)
-        low, high = _fisher_interval(r_hat, n)
-        estimated = equipercentile(total_a, total_b)
+        n_pairs = int(pd.concat([total_a, total_b], axis=1).dropna().shape[0])
+        low, high = _fisher_interval(r_hat, n_pairs)
+        try:
+            estimated = equipercentile(total_a, total_b)
+            crosswalk_rmse = _crosswalk_rmse(estimated, truth["crosswalk"])
+        except ValueError:
+            crosswalk_rmse = float("nan")
         rows.append(
             {
                 "replication": rep,
+                "n_eff": n_pairs,
                 "r": r_hat,
                 "ci_low": low,
                 "ci_high": high,
                 "icc": icc21(total_a, total_b),
-                "crosswalk_rmse": _crosswalk_rmse(estimated, truth["crosswalk"]),
+                "crosswalk_rmse": crosswalk_rmse,
             }
         )
 
@@ -253,8 +270,10 @@ def run_simulation(
             & (truth["true_r"] <= recovery["ci_high"])
         )
     )
+    crosswalk_values = recovery["crosswalk_rmse"].dropna()
     summary = {
         "n": n,
+        "mean_n_eff": float(recovery["n_eff"].mean()),
         "replications": reps,
         "true_r": truth["true_r"],
         "mean_r": float(recovery["r"].mean()),
@@ -264,7 +283,9 @@ def run_simulation(
         "mean_ci_width": float((recovery["ci_high"] - recovery["ci_low"]).mean()),
         "true_icc": truth["true_icc"],
         "mean_icc": float(recovery["icc"].mean()),
-        "mean_crosswalk_rmse": float(recovery["crosswalk_rmse"].mean()),
+        "mean_crosswalk_rmse": (
+            float(crosswalk_values.mean()) if len(crosswalk_values) else float("nan")
+        ),
     }
     (out / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"

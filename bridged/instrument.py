@@ -120,10 +120,13 @@ class Instrument:
             total_spec = scoring.get("total", {"method": "sum", "items": "all"})
             total_column = total_spec.get("column")
             all_ids = [item.id for item in items]
-            total_items = (
-                all_ids if total_spec.get("items", "all") == "all"
-                else list(total_spec["items"])
-            )
+            items_spec = total_spec.get("items", "all")
+            if items_spec == "all":
+                total_items = all_ids
+            elif isinstance(items_spec, str):
+                total_items = [items_spec]
+            else:
+                total_items = list(items_spec)
             subscales: dict[str, list[str]] = {}
             subscale_columns: dict[str, str] = {}
             for name, spec in scoring.get("subscales", {}).items():

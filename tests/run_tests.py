@@ -247,6 +247,29 @@ def test_package_version_matches_pyproject() -> None:
     assert __version__ == declared
 
 
+def test_single_item_total_spec_is_not_split_into_characters() -> None:
+    raw = {
+        "id": "single",
+        "version": "1.0.0",
+        "items": [{"id": "q1", "response": "s"}],
+        "response_scales": {"s": {"levels": [0, 1]}},
+        "scoring": {"total": {"method": "sum", "items": "q1"}},
+    }
+    assert Instrument.from_dict(raw).total_items == ["q1"]
+
+
+def test_simulation_missingness_reduces_effective_n() -> None:
+    config = SimConfig(
+        n=100,
+        seed=2,
+        replications=2,
+        a=InstrumentSpec("a", 6, [0.7] * 6, 5, missing_rate=0.3),
+        b=InstrumentSpec("b", 9, [0.65] * 9, 4, missing_rate=0.3),
+    )
+    summary = run_simulation(config, _tmpdir("missing_sim"), n=100, replications=2)
+    assert summary["mean_n_eff"] < 100
+
+
 def main() -> int:
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     failures = 0

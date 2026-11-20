@@ -22,7 +22,8 @@ NORMAL = NormalDist()
 
 def clean(series: pd.Series) -> pd.Series:
     values = pd.to_numeric(series, errors="coerce")
-    values = values.where(values >= 0.5, 0.0)  # SAS zero arrives as 5.4e-79
+    # SAS zero arrives as 5.4e-79; keep true NaN as missing.
+    values = values.mask(values < 0.5, 0.0)
     values = values.where(values.isin([0.0, 1.0, 2.0, 3.0]))
     return values
 

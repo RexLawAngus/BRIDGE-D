@@ -35,12 +35,12 @@ sample sizes, latent correlations and missingness mechanisms.
 
 | n | latent_r | missing | mean_r | true_r | true_r_mech | bias_mech | coverage | CI width | link RMSE |
 |---|---|---|---|---|---|---|---|---|---|
-| 42 | 0.6 | none | 0.420 | 0.453 | 0.453 | -0.032 | 0.835 | 0.491 | 3.43 |
-| 42 | 0.6 | mcar20 | 0.374 | 0.453 | 0.445 | -0.071 | 0.875 | 0.801 | 4.28 |
-| 42 | 0.6 | mnar20 | 0.389 | 0.453 | 0.422 | -0.033 | 0.855 | 0.510 | 3.31 |
-| 42 | 0.4 | none | 0.276 | 0.281 | 0.281 | -0.005 | 0.895 | 0.547 | 3.43 |
-| 200 | 0.6 | none | 0.441 | 0.453 | 0.453 | -0.012 | 0.855 | 0.223 | 2.25 |
-| 200 | 0.4 | mnar20 | 0.270 | 0.281 | 0.269 | +0.001 | 0.910 | 0.258 | 2.31 |
+| 42 | 0.6 | none | 0.426 | 0.458 | 0.458 | -0.033 | 0.865 | 0.489 | 3.40 |
+| 42 | 0.6 | mcar20 | 0.382 | 0.458 | 0.450 | -0.068 | 0.870 | 0.797 | 4.32 |
+| 42 | 0.6 | mnar20 | 0.392 | 0.458 | 0.428 | -0.036 | 0.870 | 0.510 | 3.27 |
+| 42 | 0.4 | none | 0.279 | 0.285 | 0.285 | -0.006 | 0.915 | 0.547 | 3.40 |
+| 200 | 0.6 | none | 0.448 | 0.458 | 0.458 | -0.010 | 0.855 | 0.221 | 2.17 |
+| 200 | 0.4 | mnar20 | 0.273 | 0.285 | 0.273 | +0.000 | 0.900 | 0.258 | 2.25 |
 
 The full table is in `summary.csv`; per-replication results are in
 `results.csv` (regenerated, not committed).
@@ -48,24 +48,24 @@ The full table is in `summary.csv`; per-replication results are in
 ## What the numbers say
 
 1. **Bias is small.** Against the mechanism-specific truth, most cells are
-   within `±0.03`; the largest is `-0.071` under MCAR at `n = 42`,
+   within `±0.03`; the largest is `-0.068` under MCAR at `n = 42`,
    `latent_r = 0.6`. The estimator converges to the right value for the
    condition being simulated.
 2. **Coverage is below nominal.** At `n = 42` and `latent_r = 0.6`, the 95%
-   interval contains the truth only 83–88% of the time. At `n = 200` it is
-   still 85–92%. Fisher intervals on ordinal totals are too optimistic,
-   especially for high correlations; this is a limitation to report, and a
-   candidate for a bootstrap or BCa interval later.
-3. **CI width shrinks as expected.** From about `0.55` at `n = 42` to `0.22`
-   at `n = 200` for a true correlation near `0.45`.
+   interval contains the truth about 87% of the time. At `n = 200` the range is
+   85–93%. Fisher intervals on ordinal totals are too optimistic, especially
+   for high correlations; this is a limitation to report, and a candidate for a
+   bootstrap or BCa interval later.
+3. **CI width shrinks as expected.** From about `0.49` at `n = 42` to `0.22`
+   at `n = 200` for a true correlation near `0.46`.
 4. **Crosswalk error is large at small n.** The equipercentile link is off by
    2–4 points on a 0–36 scale even in the central range; `n = 200` is the
    minimum at which the error approaches 2 points. Tails are worse and are not
    summarised here.
-5. **MCAR 20% is a stress test, not a realistic scenario.** Independent 20%
-   missingness per item plus the minimum-answered rules keeps only about 40%
-   of subjects. In NHANES, the any-missing rate is 0.4%; realistic
-   missingness needs a lower-rate condition.
+5. **MCAR 20% is a stress test.** Independent 20% missingness per item plus the
+   minimum-answered rules keeps only about 40% of subjects. In NHANES, any item
+   missing occurs for 8.4% of respondents; 20% per item is still higher than a
+   realistic scenario.
 
 ## Reproduce
 
