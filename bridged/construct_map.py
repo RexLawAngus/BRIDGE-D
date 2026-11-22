@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -21,6 +22,7 @@ from sklearn.manifold import MDS
 from sklearn.metrics import silhouette_score
 
 from .instrument import Instrument
+from .map_analysis import summarize_instrument_footprints
 
 __all__ = [
     "ConstructMapResult",
@@ -40,6 +42,8 @@ class ConstructMapResult:
     distances: pd.DataFrame
     pairwise_n: pd.DataFrame
     coordinates: pd.DataFrame
+    instrument_footprints: pd.DataFrame
+    instrument_distances: pd.DataFrame
     linkage_matrix: np.ndarray
     coassignment: pd.DataFrame | None
     metrics: dict[str, Any]
@@ -357,12 +361,15 @@ def fit_construct_map(
         "seed": int(seed),
         **embedding_metrics,
     }
+    footprints, instrument_distances = summarize_instrument_footprints(coordinates)
     return ConstructMapResult(
         items=items,
         associations=associations,
         distances=distances,
         pairwise_n=pairwise_n,
         coordinates=coordinates,
+        instrument_footprints=footprints,
+        instrument_distances=instrument_distances,
         linkage_matrix=tree,
         coassignment=coassignment,
         metrics=metrics,
@@ -425,7 +432,7 @@ def _write_plot(result: ConstructMapResult, path: Path) -> None:
     else:
         axis.set_xlabel("Empirical dimension 1")
         axis.set_ylabel("Empirical dimension 2")
-    axis.set_title("BRIDGE-D empirical construct map")
+    axis.set_title("BRIDGE-D empirical item map")
     axis.legend(title="Instrument")
     axis.text(
         0.01,
@@ -434,6 +441,60 @@ def _write_plot(result: ConstructMapResult, path: Path) -> None:
         transform=axis.transAxes,
         fontsize=8,
         color="0.35",
+    )
+    figure.tight_layout()
+    figure.savefig(path, dpi=180)
+    plt.close(figure)
+
+
+def _write_instrument_footprints(result: ConstructMapResult, path: Path) -> None:
+    import matplotlib.pyplot as plt
+
+    frame = result.coordinates
+    figure, axis = plt.subplots(figsize=(9, 7))
+    colors = plt.get_cmap("tab10")
+    for index, (instrument, subset) in enumerate(
+        frame.groupby("instrument", sort=False)
+    ):
+        color = colors(index % 10)
+        points = subset[["dimension_1", "dimension_2"]].to_numpy()
+        axis.scatter(
+            points[:, 0], points[:, 1], color=color, s=55, alpha=0.82,
+            edgecolor="black", linewidth=0.4, label=instrument,
+        )
+        centroid = points.mean(axis=0)
+        axis.scatter(
+            *centroid, marker="X", color=color, s=160,
+            edgecolor="white", linewidth=0.9, zorder=4,
+        )
+        axis.annotate(
+            instrument, centroid, xytext=(6, 6), textcoords="offset points",
+            fontsize=9, weight="bold",
+        )
+        if len(points) >= 3 and np.linalg.matrix_rank(points - centroid) >= 2:
+            from scipy.spatial import ConvexHull
+
+            hull = ConvexHull(points)
+            polygon = points[hull.vertices]
+            axis.fill(
+                polygon[:, 0], polygon[:, 1], color=color, alpha=0.12,
+                linewidth=0,
+            )
+            axis.plot(
+                np.r_[polygon[:, 0], polygon[0, 0]],
+                np.r_[polygon[:, 1], polygon[0, 1]],
+                color=color, linewidth=1.0, alpha=0.65,
+            )
+    axis.axhline(0, color="0.85", linewidth=0.8)
+    axis.axvline(0, color="0.85", linewidth=0.8)
+    axis.set_xlabel("Empirical dimension 1")
+    axis.set_ylabel("Empirical dimension 2")
+    axis.set_title("Projected instrument footprints")
+    axis.legend(title="Instrument")
+    axis.text(
+        0.01, 0.01,
+        "Hulls, centroids, and distances are descriptive in this fitted 2D projection.",
+        transform=axis.transAxes, fontsize=8, color="0.35",
     )
     figure.tight_layout()
     figure.savefig(path, dpi=180)
@@ -477,6 +538,12 @@ def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list
     coordinate_path = out / "item_coordinates.csv"
     result.coordinates.to_csv(coordinate_path, index=False)
     written.append(coordinate_path)
+    footprint_path = out / "instrument_footprints.csv"
+    result.instrument_footprints.to_csv(footprint_path, index=False)
+    written.append(footprint_path)
+    distance_path = out / "instrument_distances.csv"
+    result.instrument_distances.to_csv(distance_path, index=False)
+    written.append(distance_path)
     if result.coassignment is not None:
         path = out / "bootstrap_coassignment.csv"
         result.coassignment.rename_axis("item").to_csv(path)
@@ -489,11 +556,15 @@ def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list
     )
     written.append(config_path)
 
-    map_path = out / "construct_map.png"
+    map_path = out / "item_map.png"
+    legacy_map_path = out / "construct_map.png"
+    footprint_figure_path = out / "instrument_footprints.png"
     tree_path = out / "cluster_tree.png"
     _write_plot(result, map_path)
+    shutil.copyfile(map_path, legacy_map_path)
+    _write_instrument_footprints(result, footprint_figure_path)
     _write_tree(result, tree_path)
-    written.extend([map_path, tree_path])
+    written.extend([map_path, legacy_map_path, footprint_figure_path, tree_path])
 
     metrics = result.metrics
     fit_lines = []
@@ -509,7 +580,7 @@ def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list
         fit_lines.append(f"- Non-metric MDS stress: {metrics['stress']:.4f}")
     report = "\n".join(
         [
-            "# BRIDGE-D empirical construct map",
+            "# BRIDGE-D empirical item map",
             "",
             f"- Subjects: {metrics['n_subjects']}",
             f"- Items: {metrics['n_items']}",
@@ -523,13 +594,19 @@ def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list
             ),
             f"- Valid bootstrap fits: {metrics['bootstrap_valid']} / "
             f"{metrics['bootstrap_requested']}",
+            f"- Instruments summarized: {len(result.instrument_footprints)}",
             "",
             "The coordinates describe item-response similarity in this sample. "
             "Dimension 1 and Dimension 2 do not have assigned psychological meanings.",
+            "Instrument footprints are descriptive summaries of the fitted "
+            "two-dimensional projection, not universal scale boundaries.",
             "",
         ]
     )
-    report_path = out / "construct_map_report.md"
+    report_path = out / "item_map_report.md"
     report_path.write_text(report, encoding="utf-8")
     written.append(report_path)
+    legacy_report_path = out / "construct_map_report.md"
+    shutil.copyfile(report_path, legacy_report_path)
+    written.append(legacy_report_path)
     return written

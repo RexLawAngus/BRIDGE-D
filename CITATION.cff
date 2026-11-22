@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use BRIDGE-D in your research, please cite this repository."
 title: "BRIDGE-D: Bridging Instruments for Depression"
-version: 0.3.1
-date-released: 2026-11-21
+version: 0.4.0
+date-released: 2026-11-22
 license: MIT
 type: software
 repository-code: "https://github.com/RexLawAngus/BRIDGE-D"
@@ -17,7 +17,8 @@ keywords:
 abstract: >
   Instrument-as-data toolkit for scoring and comparing co-administered
   depression scales, with agreement, classification and equipercentile
-  linking, empirical item construct maps, and known-truth simulation for
+  linking, empirical item maps, instrument footprints, post-fit content-group
+  validation, cross-sample map comparison, and known-truth simulation for
   software validation and sample-size planning.
 authors:
   - family-names: "She"

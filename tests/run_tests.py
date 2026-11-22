@@ -82,6 +82,70 @@ def test_construct_map_recovers_item_neighborhoods() -> None:
     assert labels["a@1.0.0/a1"] == labels["a@1.0.0/a2"]
     assert labels["b@1.0.0/b1"] == labels["b@1.0.0/b2"]
     assert labels["a@1.0.0/a1"] != labels["b@1.0.0/b1"]
+    assert set(result.instrument_footprints["instrument"]) == {"a", "b"}
+    assert len(result.instrument_distances) == 1
+    assert result.instrument_distances.iloc[0]["centroid_distance"] > 0
+
+
+def test_item_map_writes_footprint_outputs() -> None:
+    from bridged.construct_map import fit_construct_map, write_construct_map
+
+    result = fit_construct_map(
+        _map_instruments(), _map_data(), clusters=2, seed=4, embedding="pca"
+    )
+    out = _tmpdir("item_map_outputs")
+    written = {path.name for path in write_construct_map(result, out)}
+    assert "item_map.png" in written
+    assert "instrument_footprints.csv" in written
+    assert "instrument_distances.csv" in written
+    assert "item_map_report.md" in written
+
+
+def test_post_fit_group_validation_recovers_known_groups() -> None:
+    from bridged.construct_map import fit_construct_map
+    from bridged.map_analysis import validate_map_groups
+
+    result = fit_construct_map(
+        _map_instruments(), _map_data(), clusters=2, seed=4, embedding="pca"
+    )
+    groups = pd.DataFrame(
+        {
+            "instrument": ["a"] * 3 + ["b"] * 3,
+            "item_id": ["a1", "a2", "a3", "b1", "b2", "b3"],
+            "group": ["first"] * 3 + ["second"] * 3,
+        }
+    )
+    validation = validate_map_groups(
+        result.coordinates, groups, permutations=199, seed=8
+    )
+    assert validation.metrics["labels_used_to_fit_map"] is False
+    assert validation.metrics["n_groups"] == 2
+    assert validation.metrics["global_eta_squared"] > 0.8
+    assert validation.pairwise_tests.iloc[0]["permutation_method"] == "exact"
+    assert validation.pairwise_tests.iloc[0]["permutation_p"] <= 0.1
+
+
+def test_map_comparison_aligns_rotation_and_reflection() -> None:
+    from bridged.map_analysis import compare_item_maps
+
+    reference = pd.DataFrame(
+        {
+            "item": ["a", "b", "c", "d"],
+            "dimension_1": [0.0, 1.0, 0.0, 1.0],
+            "dimension_2": [0.0, 0.0, 2.0, 2.0],
+        }
+    )
+    candidate = pd.DataFrame(
+        {
+            "item": ["a", "b", "c", "d"],
+            "dimension_1": [3.0, 3.0, -1.0, -1.0],
+            "dimension_2": [5.0, 7.0, 5.0, 7.0],
+        }
+    )
+    comparison = compare_item_maps(reference, candidate)
+    assert comparison.metrics["n_common_items"] == 4
+    assert comparison.metrics["coordinate_rmse"] < 1e-10
+    assert comparison.metrics["pairwise_distance_correlation"] > 0.999999
 
 
 def test_construct_map_bootstrap_records_uncertainty() -> None:

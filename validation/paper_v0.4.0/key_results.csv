@@ -1,0 +1,5 @@
+dataset,analysis,n_items,n_subjects,pc1_variance,pc2_variance,postfit_eta_squared,postfit_p,cross_sample_dim1_r,cross_sample_dim2_r,cross_sample_rmse,pairwise_distance_r,interpretation
+Granwald,PHQ-9+CES-D+SDS raw PCA,49,524,0.374514,0.057202,0.102338,0.1006,0.902671,0.901173,0.088032,0.820154,raw two-dimensional content separation not established
+NSDUH,symptoms,8,19832,0.179229,0.138633,0.563585,0.0551,0.983859,0.945761,0.088489,0.847090,somatic versus cognitive-affective contrast is stable but borderline
+NSDUH,function domains,4,19832,0.668135,0.167212,0.997554,0.3369,0.998528,0.999810,0.005818,0.999552,visually strong but exact test has only six partitions
+NSDUH,combined symptoms+function,12,19832,0.248745,0.099072,0.884011,0.0004,0.996554,0.975536,0.047813,0.971304,four predefined groups separate but response format is a competing explanation

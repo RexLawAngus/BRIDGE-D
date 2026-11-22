@@ -223,7 +223,7 @@ python scripts/check_public.py
 It reads forbidden terms from `private/forbidden.txt` (one per line) and fails
 if any appear outside `private/`.
 
-## Empirical construct map
+## Empirical item map
 
 The optional construct-map module places co-administered items in a continuous
 two-dimensional space based on similarity in their response patterns. It uses
@@ -234,7 +234,7 @@ coordinate and cluster stability.
 ```bash
 pip install -e ".[map]"
 
-bridged construct-map \
+bridged item-map \
   --instrument instruments/phq9.toml \
   --instrument instruments/example_new.toml \
   --data examples/demo_cohort.csv \
@@ -251,9 +251,32 @@ projection does not determine cluster membership.
 
 The output includes association and distance matrices, item coordinates,
 cluster assignments, bootstrap co-assignment probabilities, a map, a
-dendrogram, and a method report. Coordinates reflect empirical response
-similarity in the analyzed sample. The two axes have no automatic
-psychological labels and are not estimates of a universal symptom space.
+dendrogram, projected instrument footprints, pairwise instrument distances,
+and a method report. `construct-map` remains as a compatible alias.
+Coordinates reflect empirical response similarity in the analyzed sample.
+The two axes have no automatic psychological labels and are not estimates of
+a universal symptom space.
+
+Pre-specified content labels are checked only after the map has been fitted:
+
+```bash
+# groups.csv: item,group  (or instrument,item_id,group)
+bridged map-validate \
+  --coordinates map_output/item_coordinates.csv \
+  --groups groups.csv --out map_validation --permutations 9999
+
+bridged map-compare \
+  --reference sample_1/item_coordinates.csv \
+  --candidate sample_2/item_coordinates.csv \
+  --out cross_sample_comparison
+```
+
+`map-validate` reports group centroids, a global between-group variance ratio,
+pairwise centroid distances, and permutation tests. The labels do not alter
+the fitted coordinates. `map-compare` uses Procrustes alignment and reports
+coordinate RMSE, aligned-axis correlations, normalized residual, and
+pairwise-distance correlation. These are stability and interpretation checks,
+not confirmatory latent-variable models.
 
 Reproducible validation examples are in
 [`validation/construct_map_granwald`](validation/construct_map_granwald) and
@@ -374,7 +397,7 @@ python tests/run_tests.py
 - Cutoffs are whatever the instrument file declares. Verify them against the
   source publication before publishing results.
 - The demo instrument `example_new.toml` is synthetic and must be replaced.
-- Construct-map coordinates depend on the analyzed sample, missingness, and
+- Item-map coordinates and projected instrument footprints depend on the analyzed sample, missingness, and
   response distributions. Clusters and distances are exploratory results, not
   clinical subtypes or validated latent-trait coordinates.
 

@@ -188,6 +188,22 @@ def import_items(items_path: str, out_path: str, instrument_id: str, name: str) 
     print(f"wrote {out_path} ({len(frame)} rows)")
 
 
+def _add_item_map_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--instrument", action="append", required=True)
+    parser.add_argument("--data", required=True)
+    parser.add_argument("--out", required=True)
+    parser.add_argument("--min-pairs", type=int, default=10)
+    parser.add_argument("--clusters", type=int, default=None)
+    parser.add_argument("--bootstrap", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--embedding",
+        choices=["mds", "pca"],
+        default="mds",
+        help="two-dimensional item mapping method (default: mds)",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="bridge-d",
@@ -239,23 +255,35 @@ def main(argv: list[str] | None = None) -> int:
     p_sim.add_argument("--n", type=int, default=None)
     p_sim.add_argument("--replications", type=int, default=None)
 
+    p_item_map = sub.add_parser(
+        "item-map",
+        help="derive an empirical item map and instrument footprints",
+    )
+    _add_item_map_arguments(p_item_map)
+
     p_map = sub.add_parser(
         "construct-map",
-        help="derive an empirical item map from co-administered responses",
+        help="legacy alias for item-map",
     )
-    p_map.add_argument("--instrument", action="append", required=True)
-    p_map.add_argument("--data", required=True)
-    p_map.add_argument("--out", required=True)
-    p_map.add_argument("--min-pairs", type=int, default=10)
-    p_map.add_argument("--clusters", type=int, default=None)
-    p_map.add_argument("--bootstrap", type=int, default=0)
-    p_map.add_argument("--seed", type=int, default=0)
-    p_map.add_argument(
-        "--embedding",
-        choices=["mds", "pca"],
-        default="mds",
-        help="two-dimensional item calibration method (default: mds)",
+    _add_item_map_arguments(p_map)
+
+    p_map_validate = sub.add_parser(
+        "map-validate",
+        help="compare fitted item coordinates with pre-specified groups",
     )
+    p_map_validate.add_argument("--coordinates", required=True)
+    p_map_validate.add_argument("--groups", required=True)
+    p_map_validate.add_argument("--out", required=True)
+    p_map_validate.add_argument("--permutations", type=int, default=9999)
+    p_map_validate.add_argument("--seed", type=int, default=0)
+
+    p_map_compare = sub.add_parser(
+        "map-compare",
+        help="align and compare two independently fitted item maps",
+    )
+    p_map_compare.add_argument("--reference", required=True)
+    p_map_compare.add_argument("--candidate", required=True)
+    p_map_compare.add_argument("--out", required=True)
 
     args = parser.parse_args(argv)
 
@@ -318,11 +346,11 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(summary, ensure_ascii=False, indent=2))
         return 0
 
-    if args.command == "construct-map":
+    if args.command in {"item-map", "construct-map"}:
         try:
             from .construct_map import fit_construct_map, write_construct_map
         except ImportError as exc:
-            print("construct-map needs: pip install 'bridge-d[map]'", file=sys.stderr)
+            print("item-map needs: pip install 'bridge-d[map]'", file=sys.stderr)
             print(f"missing dependency: {exc}", file=sys.stderr)
             return 1
         instruments = [Instrument.load(path) for path in args.instrument]
@@ -338,9 +366,49 @@ def main(argv: list[str] | None = None) -> int:
         )
         written = write_construct_map(result, args.out)
         print(
-            f"wrote {len(written)} construct-map files to {args.out} "
+            f"wrote {len(written)} item-map files to {args.out} "
             f"({result.metrics['n_items']} items, "
             f"{result.metrics['n_subjects']} subjects)"
+        )
+        return 0
+
+    if args.command == "map-validate":
+        try:
+            from .map_analysis import validate_map_groups, write_group_validation
+        except ImportError as exc:
+            print("map-validate needs: pip install 'bridge-d[map]'", file=sys.stderr)
+            print(f"missing dependency: {exc}", file=sys.stderr)
+            return 1
+        coordinates = pd.read_csv(args.coordinates)
+        groups = pd.read_csv(args.groups)
+        result = validate_map_groups(
+            coordinates,
+            groups,
+            permutations=args.permutations,
+            seed=args.seed,
+        )
+        written = write_group_validation(result, args.out)
+        print(
+            f"wrote {len(written)} validation files to {args.out} "
+            f"({result.metrics['n_labeled_items']} labeled items, "
+            f"{result.metrics['n_groups']} groups)"
+        )
+        return 0
+
+    if args.command == "map-compare":
+        try:
+            from .map_analysis import compare_item_maps, write_map_comparison
+        except ImportError as exc:
+            print("map-compare needs: pip install 'bridge-d[map]'", file=sys.stderr)
+            print(f"missing dependency: {exc}", file=sys.stderr)
+            return 1
+        reference = pd.read_csv(args.reference)
+        candidate = pd.read_csv(args.candidate)
+        result = compare_item_maps(reference, candidate)
+        written = write_map_comparison(result, args.out)
+        print(
+            f"wrote {len(written)} comparison files to {args.out} "
+            f"({result.metrics['n_common_items']} common items)"
         )
         return 0
 

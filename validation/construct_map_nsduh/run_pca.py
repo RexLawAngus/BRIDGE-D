@@ -23,6 +23,12 @@ sys.path.insert(0, str(ROOT))
 
 from bridged.construct_map import fit_construct_map, write_construct_map  # noqa: E402
 from bridged.instrument import Instrument  # noqa: E402
+from bridged.map_analysis import (  # noqa: E402
+    compare_item_maps,
+    validate_map_groups,
+    write_group_validation,
+    write_map_comparison,
+)
 
 HERE = Path(__file__).resolve().parent
 DATASET = (
@@ -286,6 +292,28 @@ def add_hypothesis_labels(result, output_path: Path) -> None:
     frame.to_csv(output_path, index=False)
 
 
+def postfit_groups_for(label: str) -> pd.DataFrame:
+    categories: list[str]
+    if label == "symptoms":
+        categories = ["cognitive_affective", "somatic"]
+    elif label == "functions":
+        categories = ["non_interpersonal_function", "interpersonal_function"]
+    else:
+        categories = list(EXPECTED_GROUPS)
+    rows = [
+        {
+            "instrument": (
+                "nsduh_mde8" if item_id.startswith("mde_") else "nsduh_sds4"
+            ),
+            "item_id": item_id,
+            "group": category,
+        }
+        for category in categories
+        for item_id in EXPECTED_GROUPS[category]
+    ]
+    return pd.DataFrame(rows)
+
+
 def plot_panel(axis, result, title: str) -> None:
     frame = result.coordinates.copy()
     frame["expected_category"] = frame["item_id"].map(category_for)
@@ -440,6 +468,24 @@ def main(argv: list[str] | None = None) -> None:
         "analyses": {},
     }
     for label, result in full_results.items():
+        postfit_validation = validate_map_groups(
+            result.coordinates,
+            postfit_groups_for(label),
+            permutations=9999,
+            seed=20261120,
+        )
+        write_group_validation(
+            postfit_validation,
+            output / label / "postfit_group_validation",
+        )
+        cross_sample = compare_item_maps(
+            split_results[label]["early"].coordinates,
+            split_results[label]["late"].coordinates,
+        )
+        write_map_comparison(
+            cross_sample,
+            output / label / "cross_sample_comparison",
+        )
         label_summary: dict[str, object] = {
             "pca_metrics": result.metrics,
             "split_year_reproducibility": split_axis_reproducibility(
@@ -447,6 +493,13 @@ def main(argv: list[str] | None = None) -> None:
                 split_results[label]["early"],
                 split_results[label]["late"],
             ),
+            "v0_4_postfit_group_validation": {
+                "metrics": postfit_validation.metrics,
+                "pairwise_tests": postfit_validation.pairwise_tests.to_dict(
+                    orient="records"
+                ),
+            },
+            "v0_4_cross_sample_comparison": cross_sample.metrics,
         }
         if label in {"symptoms", "combined"}:
             label_summary["somatic_vs_cognitive_affective"] = exact_group_separation(

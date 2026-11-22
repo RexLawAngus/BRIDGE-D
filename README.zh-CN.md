@@ -30,13 +30,13 @@ BRIDGE-D 不替代 `psych`、`lavaan`、`equate`，不是临床诊断设备，�
 
 ## 安装
 
-需要 Python 3.11+（使用标准库 `tomllib`）、numpy 和 pandas。Construct Map 需要可选的 `map` 依赖。
+需要 Python 3.11+（使用标准库 `tomllib`）、numpy 和 pandas。经验条目地图需要可选的 `map` 依赖。
 
 ```bash
 pip install -e .
 bridged --help
 
-# 安装 PCA/MDS Construct Map 和绘图依赖
+# 安装 PCA/MDS 条目地图和绘图依赖
 pip install -e ".[map]"
 ```
 
@@ -191,14 +191,14 @@ python scripts/check_public.py
 
 它从 `private/forbidden.txt` 读取禁用词（每行一个），如果这些词出现在 `private/` 之外就失败。
 
-## 经验 Construct Map
+## 经验条目地图
 
-可选的 Construct Map 模块根据共同施测条目的回答模式相似性，将条目放入连续的二维空间。当前实现使用 Spearman 条目相关、非度量多维尺度分析和平均连接层次聚类，并用 Bootstrap 估计坐标与聚类稳定性。
+可选的条目地图模块根据共同施测条目的回答模式相似性，将条目放入连续的二维空间。当前实现使用 Spearman 条目相关、PCA 或非度量多维尺度分析和平均连接层次聚类，并用 Bootstrap 估计坐标与聚类稳定性。
 
 ```bash
 pip install -e ".[map]"
 
-bridged construct-map \
+bridged item-map \
   --instrument instruments/phq9.toml \
   --instrument instruments/example_new.toml \
   --data examples/demo_cohort.csv \
@@ -209,7 +209,23 @@ bridged construct-map \
 
 `--embedding pca` 使用 Spearman 条目相关矩阵的前两个主成分载荷标定坐标，并报告解释方差。默认的 `--embedding mds` 保留非度量 MDS。层次聚类始终使用完整相关距离，不依赖二维投影，以免聚类结果被二维降维进一步压缩。
 
-程序输出条目相关矩阵、距离矩阵、连续坐标、聚类归属、Bootstrap 共聚类概率、地图、树状图和方法报告。坐标表示当前样本中的回答模式相似性。两个坐标轴没有自动赋予心理学名称，也不代表已经发现了普适的症状空间。
+程序输出条目相关矩阵、距离矩阵、连续坐标、聚类归属、Bootstrap 共聚类概率、地图、树状图、量表投影覆盖足迹、量表间距离和方法报告。旧命令 `construct-map` 继续作为兼容别名。坐标表示当前样本中的回答模式相似性。两个坐标轴没有自动赋予心理学名称，也不代表已经发现了普适的症状空间。
+
+预先定义的内容标签只能在地图拟合完成后进入检验：
+
+```bash
+# groups.csv: item,group；也可使用 instrument,item_id,group
+bridged map-validate \
+  --coordinates map_output/item_coordinates.csv \
+  --groups groups.csv --out map_validation --permutations 9999
+
+bridged map-compare \
+  --reference sample_1/item_coordinates.csv \
+  --candidate sample_2/item_coordinates.csv \
+  --out cross_sample_comparison
+```
+
+`map-validate` 输出各组质心、全局组间方差比例、两两质心距离与置换检验；标签不会改变已拟合坐标。`map-compare` 通过 Procrustes 对齐比较两张地图，报告坐标 RMSE、对齐后坐标轴相关、标准化残差和成对距离相关。这些指标用于稳定性与解释检查，不等同于验证性潜变量模型。
 
 可复现验证位于
 [`validation/construct_map_granwald`](validation/construct_map_granwald) 和
@@ -308,7 +324,7 @@ python tests/run_tests.py
 - 原始分数上的 Bland-Altman 假设同一量纲；量程不同时只能作描述性参考，不能当作一致性结论。
 - 切点完全由量表文件声明。发表结果前请对照原始文献核验。
 - 演示量表 `example_new.toml` 是合成的，必须替换。
-- Construct Map 坐标会受到样本、缺失情况和回答分布影响。聚类和距离属于探索性结果，不能直接解释为临床亚型或已验证的潜在构念坐标。
+- 条目地图坐标与量表投影覆盖足迹会受到样本、缺失情况和回答分布影响。聚类和距离属于探索性结果，不能直接解释为临床亚型或已验证的潜在构念坐标。
 
 ## 许可
 

@@ -15,6 +15,11 @@ Spearman-correlation PCA item map to the full sample, repeats the fit in the two
 original samples, and writes bootstrap uncertainty and split-sample
 reproducibility results to `output_pca/`.
 
+Under v0.4.0 the same run also writes projected instrument footprints,
+post-fit somatic-versus-interpersonal label tests, and a Procrustes-aligned
+comparison of the two original samples. The paper-facing interpretation is in
+[`../paper_v0.4.0/RESULTS.zh-CN.md`](../paper_v0.4.0/RESULTS.zh-CN.md).
+
 PCA component signs are arbitrary, so the split-sample coordinate table aligns
 each axis sign to the full-sample solution. Reported split loading correlations
 use the absolute correlation. Automatic clustering rejects solutions that only

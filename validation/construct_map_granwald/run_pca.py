@@ -17,6 +17,12 @@ sys.path.insert(0, str(ROOT))
 
 from bridged.construct_map import fit_construct_map, write_construct_map  # noqa: E402
 from bridged.instrument import Instrument  # noqa: E402
+from bridged.map_analysis import (  # noqa: E402
+    compare_item_maps,
+    validate_map_groups,
+    write_group_validation,
+    write_map_comparison,
+)
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_DATA_PATH = (
@@ -90,6 +96,27 @@ def main(argv: list[str] | None = None) -> None:
     full = fit_one("full", data, instruments, bootstrap=100, output=output)
     first = fit_one("sample_1", sample_1, instruments, bootstrap=50, output=output)
     second = fit_one("sample_2", sample_2, instruments, bootstrap=50, output=output)
+
+    cross_sample = compare_item_maps(first.coordinates, second.coordinates)
+    write_map_comparison(cross_sample, output / "cross_sample_comparison")
+
+    tags = pd.read_csv(HERE / "semantic_tags.csv")
+    labeled_tags = tags.loc[
+        tags["somatic"].eq(1) | tags["interpersonal"].eq(1),
+        ["instrument", "item_id"],
+    ].copy()
+    labeled_tags["group"] = np.where(
+        tags.loc[labeled_tags.index, "somatic"].eq(1),
+        "somatic",
+        "interpersonal",
+    )
+    postfit_validation = validate_map_groups(
+        full.coordinates,
+        labeled_tags,
+        permutations=9999,
+        seed=20261120,
+    )
+    write_group_validation(postfit_validation, output / "postfit_content_validation")
 
     association_reproducibility = float(
         np.corrcoef(
@@ -181,6 +208,13 @@ def main(argv: list[str] | None = None) -> None:
         "split_pc2_loading_abs_correlation": pc2_reproducibility,
         "split_cluster_adjusted_rand": cluster_reproducibility,
         "split_cluster_note": cluster_note,
+        "v0_4_cross_sample_comparison": cross_sample.metrics,
+        "v0_4_postfit_content_validation": {
+            "metrics": postfit_validation.metrics,
+            "pairwise_tests": postfit_validation.pairwise_tests.to_dict(
+                orient="records"
+            ),
+        },
     }
     (output / "validation_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2, allow_nan=False),
