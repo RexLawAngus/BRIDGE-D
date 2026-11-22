@@ -101,22 +101,22 @@ def main(argv: list[str] | None = None) -> None:
     write_map_comparison(cross_sample, output / "cross_sample_comparison")
 
     tags = pd.read_csv(HERE / "semantic_tags.csv")
-    labeled_tags = tags.loc[
-        tags["somatic"].eq(1) | tags["interpersonal"].eq(1),
-        ["instrument", "item_id"],
-    ].copy()
-    labeled_tags["group"] = np.where(
-        tags.loc[labeled_tags.index, "somatic"].eq(1),
-        "somatic",
-        "interpersonal",
-    )
-    postfit_validation = validate_map_groups(
-        full.coordinates,
-        labeled_tags,
-        permutations=9999,
-        seed=20261120,
-    )
-    write_group_validation(postfit_validation, output / "postfit_content_validation")
+    postfit_validations = {}
+    for tag in ["somatic", "interpersonal"]:
+        group_table = tags[["instrument", "item_id"]].copy()
+        group_table["group"] = np.where(
+            tags[tag].eq(1),
+            tag,
+            f"non_{tag}",
+        )
+        validation = validate_map_groups(
+            full.coordinates,
+            group_table,
+            permutations=9999,
+            seed=20261120,
+        )
+        write_group_validation(validation, output / f"postfit_{tag}_validation")
+        postfit_validations[tag] = validation
 
     association_reproducibility = float(
         np.corrcoef(
@@ -209,11 +209,15 @@ def main(argv: list[str] | None = None) -> None:
         "split_cluster_adjusted_rand": cluster_reproducibility,
         "split_cluster_note": cluster_note,
         "v0_4_cross_sample_comparison": cross_sample.metrics,
-        "v0_4_postfit_content_validation": {
-            "metrics": postfit_validation.metrics,
-            "pairwise_tests": postfit_validation.pairwise_tests.to_dict(
-                orient="records"
-            ),
+        "v0_4_postfit_content_validations": {
+            tag: {
+                "contrast": f"{tag} vs non-{tag}",
+                "metrics": validation.metrics,
+                "pairwise_tests": validation.pairwise_tests.to_dict(
+                    orient="records"
+                ),
+            }
+            for tag, validation in postfit_validations.items()
         },
     }
     (output / "validation_summary.json").write_text(

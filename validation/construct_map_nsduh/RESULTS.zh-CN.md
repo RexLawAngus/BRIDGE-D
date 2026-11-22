@@ -1,7 +1,7 @@
 # NSDUH PCA内容分组验证结果
 
-> v0.4.0 的跨样本对齐、量表覆盖足迹与统一置换检验结果见
-> [`../paper_v0.4.0/RESULTS.zh-CN.md`](../paper_v0.4.0/RESULTS.zh-CN.md)。
+> v0.4.1 的跨样本对齐、量表覆盖足迹与统一置换检验结果见
+> [`../paper_v0.4.1/RESULTS.zh-CN.md`](../paper_v0.4.1/RESULTS.zh-CN.md)。
 
 ## 分析样本
 
