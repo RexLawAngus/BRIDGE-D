@@ -19,6 +19,8 @@ from scipy.linalg import orthogonal_procrustes
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist, pdist
 
+from .figure_output import save_figure_pair
+
 COORDINATE_COLUMNS = ["dimension_1", "dimension_2"]
 
 
@@ -329,7 +331,9 @@ def compare_item_maps(
     return MapComparisonResult(merged, metrics)
 
 
-def _plot_group_validation(result: GroupValidationResult, path: Path) -> None:
+def _plot_group_validation(
+    result: GroupValidationResult, path: Path
+) -> tuple[Path, Path]:
     import matplotlib.pyplot as plt
 
     figure, axis = plt.subplots(figsize=(9, 7))
@@ -353,8 +357,9 @@ def _plot_group_validation(result: GroupValidationResult, path: Path) -> None:
     axis.text(0.01, 0.01, "Group labels were not used to fit the coordinates.",
               transform=axis.transAxes, fontsize=8, color="0.35")
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    written = save_figure_pair(figure, path)
     plt.close(figure)
+    return written
 
 
 def write_group_validation(
@@ -362,12 +367,11 @@ def write_group_validation(
 ) -> list[Path]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    paths = [
+    paths: list[Path] = [
         out / "labeled_item_coordinates.csv",
         out / "group_summary.csv",
         out / "group_pairwise_tests.csv",
         out / "map_validation.json",
-        out / "map_validation.png",
     ]
     result.labeled_coordinates.to_csv(paths[0], index=False)
     result.group_summary.to_csv(paths[1], index=False)
@@ -376,11 +380,13 @@ def write_group_validation(
         json.dumps(result.metrics, ensure_ascii=False, indent=2, allow_nan=False),
         encoding="utf-8",
     )
-    _plot_group_validation(result, paths[4])
+    paths.extend(_plot_group_validation(result, out / "map_validation.png"))
     return paths
 
 
-def _plot_map_comparison(result: MapComparisonResult, path: Path) -> None:
+def _plot_map_comparison(
+    result: MapComparisonResult, path: Path
+) -> tuple[Path, Path]:
     import matplotlib.pyplot as plt
 
     frame = result.aligned_coordinates
@@ -403,8 +409,9 @@ def _plot_map_comparison(result: MapComparisonResult, path: Path) -> None:
     axis.set_title("Cross-sample item-map comparison")
     axis.legend()
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    written = save_figure_pair(figure, path)
     plt.close(figure)
+    return written
 
 
 def write_map_comparison(
@@ -412,15 +419,14 @@ def write_map_comparison(
 ) -> list[Path]:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    paths = [
+    paths: list[Path] = [
         out / "aligned_item_coordinates.csv",
         out / "map_comparison.json",
-        out / "map_comparison.png",
     ]
     result.aligned_coordinates.to_csv(paths[0], index=False)
     paths[1].write_text(
         json.dumps(result.metrics, ensure_ascii=False, indent=2, allow_nan=False),
         encoding="utf-8",
     )
-    _plot_map_comparison(result, paths[2])
+    paths.extend(_plot_map_comparison(result, out / "map_comparison.png"))
     return paths

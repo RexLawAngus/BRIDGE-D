@@ -27,9 +27,10 @@ writes the prepared table and an auditable selection summary to the dataset's
 `analysis` directory. Later runs reuse that table.
 
 Outputs are written to `output_pca`. The three-panel
-`hypothesis_validation.png` is the main visual. `validation_summary.json`
-contains exact label-permutation checks, split-year loading reproducibility,
-PCA variance, clustering diagnostics, and sample counts.
+`hypothesis_validation` visual is written as a 300 dpi PNG and a vector SVG.
+`validation_summary.json` contains exact label-permutation checks, split-year
+loading reproducibility, PCA variance, clustering diagnostics, and sample
+counts.
 
 See `RESULTS.md` for the compact English result summary and
 `RESULTS.zh-CN.md` for the Chinese summary.

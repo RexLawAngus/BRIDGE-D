@@ -89,21 +89,30 @@ def test_construct_map_recovers_item_neighborhoods() -> None:
 
 def test_item_map_writes_footprint_outputs() -> None:
     from bridged.construct_map import fit_construct_map, write_construct_map
+    from bridged.figure_output import FIGURE_DPI
 
+    assert FIGURE_DPI == 300
     result = fit_construct_map(
         _map_instruments(), _map_data(), clusters=2, seed=4, embedding="pca"
     )
     out = _tmpdir("item_map_outputs")
     written = {path.name for path in write_construct_map(result, out)}
     assert "item_map.png" in written
+    assert "item_map.svg" in written
+    assert "construct_map.svg" in written
+    assert "instrument_footprints.svg" in written
+    assert "cluster_tree.svg" in written
     assert "instrument_footprints.csv" in written
     assert "instrument_distances.csv" in written
     assert "item_map_report.md" in written
+    assert (out / "item_map.svg").read_text(encoding="utf-8").lstrip().startswith(
+        "<?xml"
+    )
 
 
 def test_post_fit_group_validation_recovers_known_groups() -> None:
     from bridged.construct_map import fit_construct_map
-    from bridged.map_analysis import validate_map_groups
+    from bridged.map_analysis import validate_map_groups, write_group_validation
 
     result = fit_construct_map(
         _map_instruments(), _map_data(), clusters=2, seed=4, embedding="pca"
@@ -123,10 +132,18 @@ def test_post_fit_group_validation_recovers_known_groups() -> None:
     assert validation.metrics["global_eta_squared"] > 0.8
     assert validation.pairwise_tests.iloc[0]["permutation_method"] == "exact"
     assert validation.pairwise_tests.iloc[0]["permutation_p"] <= 0.1
+    written = {
+        path.name
+        for path in write_group_validation(
+            validation, _tmpdir("group_validation_outputs")
+        )
+    }
+    assert "map_validation.png" in written
+    assert "map_validation.svg" in written
 
 
 def test_map_comparison_aligns_rotation_and_reflection() -> None:
-    from bridged.map_analysis import compare_item_maps
+    from bridged.map_analysis import compare_item_maps, write_map_comparison
 
     reference = pd.DataFrame(
         {
@@ -146,6 +163,14 @@ def test_map_comparison_aligns_rotation_and_reflection() -> None:
     assert comparison.metrics["n_common_items"] == 4
     assert comparison.metrics["coordinate_rmse"] < 1e-10
     assert comparison.metrics["pairwise_distance_correlation"] > 0.999999
+    written = {
+        path.name
+        for path in write_map_comparison(
+            comparison, _tmpdir("map_comparison_outputs")
+        )
+    }
+    assert "map_comparison.png" in written
+    assert "map_comparison.svg" in written
 
 
 def test_construct_map_bootstrap_records_uncertainty() -> None:

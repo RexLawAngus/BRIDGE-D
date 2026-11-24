@@ -21,6 +21,7 @@ from scipy.spatial.distance import squareform
 from sklearn.manifold import MDS
 from sklearn.metrics import silhouette_score
 
+from .figure_output import save_figure_pair
 from .instrument import Instrument
 from .map_analysis import summarize_instrument_footprints
 
@@ -376,7 +377,7 @@ def fit_construct_map(
     )
 
 
-def _write_plot(result: ConstructMapResult, path: Path) -> None:
+def _write_plot(result: ConstructMapResult, path: Path) -> tuple[Path, Path]:
     import matplotlib.pyplot as plt
     from matplotlib.colors import BoundaryNorm
 
@@ -443,11 +444,14 @@ def _write_plot(result: ConstructMapResult, path: Path) -> None:
         color="0.35",
     )
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    written = save_figure_pair(figure, path)
     plt.close(figure)
+    return written
 
 
-def _write_instrument_footprints(result: ConstructMapResult, path: Path) -> None:
+def _write_instrument_footprints(
+    result: ConstructMapResult, path: Path
+) -> tuple[Path, Path]:
     import matplotlib.pyplot as plt
 
     frame = result.coordinates
@@ -497,11 +501,12 @@ def _write_instrument_footprints(result: ConstructMapResult, path: Path) -> None
         transform=axis.transAxes, fontsize=8, color="0.35",
     )
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    written = save_figure_pair(figure, path)
     plt.close(figure)
+    return written
 
 
-def _write_tree(result: ConstructMapResult, path: Path) -> None:
+def _write_tree(result: ConstructMapResult, path: Path) -> tuple[Path, Path]:
     import matplotlib.pyplot as plt
 
     figure, axis = plt.subplots(figsize=(10, 6))
@@ -515,8 +520,9 @@ def _write_tree(result: ConstructMapResult, path: Path) -> None:
     axis.set_ylabel("Response-pattern distance")
     axis.set_title("Average-linkage item hierarchy")
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    written = save_figure_pair(figure, path)
     plt.close(figure)
+    return written
 
 
 def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list[Path]:
@@ -560,11 +566,20 @@ def write_construct_map(result: ConstructMapResult, out_dir: str | Path) -> list
     legacy_map_path = out / "construct_map.png"
     footprint_figure_path = out / "instrument_footprints.png"
     tree_path = out / "cluster_tree.png"
-    _write_plot(result, map_path)
-    shutil.copyfile(map_path, legacy_map_path)
-    _write_instrument_footprints(result, footprint_figure_path)
-    _write_tree(result, tree_path)
-    written.extend([map_path, legacy_map_path, footprint_figure_path, tree_path])
+    map_paths = _write_plot(result, map_path)
+    legacy_map_paths = (
+        legacy_map_path,
+        legacy_map_path.with_suffix(".svg"),
+    )
+    for source, destination in zip(map_paths, legacy_map_paths):
+        shutil.copyfile(source, destination)
+    footprint_figure_paths = _write_instrument_footprints(
+        result, footprint_figure_path
+    )
+    tree_paths = _write_tree(result, tree_path)
+    written.extend(
+        [*map_paths, *legacy_map_paths, *footprint_figure_paths, *tree_paths]
+    )
 
     metrics = result.metrics
     fit_lines = []

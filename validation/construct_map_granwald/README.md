@@ -15,6 +15,9 @@ Spearman-correlation PCA item map to the full sample, repeats the fit in the two
 original samples, and writes bootstrap uncertainty and split-sample
 reproducibility results to `output_pca/`.
 
+All generated figures are written as both 300 dpi PNG files and vector SVG
+files.
+
 Under v0.4.1 the same run also writes projected instrument footprints,
 separate post-fit somatic-versus-non-somatic and
 interpersonal-versus-non-interpersonal label tests, and a Procrustes-aligned

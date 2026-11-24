@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from bridged.construct_map import fit_construct_map, write_construct_map  # noqa: E402
+from bridged.figure_output import save_figure_pair  # noqa: E402
 from bridged.instrument import Instrument  # noqa: E402
 from bridged.map_analysis import (  # noqa: E402
     compare_item_maps,
@@ -383,7 +384,7 @@ def write_validation_figure(symptoms, functions, combined, output: Path) -> None
         fontsize=14,
     )
     figure.tight_layout()
-    figure.savefig(output / "hypothesis_validation.png", dpi=200)
+    save_figure_pair(figure, output / "hypothesis_validation.png")
     plt.close(figure)
 
 

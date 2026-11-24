@@ -22,6 +22,7 @@ from bridged.construct_map import (  # noqa: E402
     collect_item_values,
     spearman_associations,
 )
+from bridged.figure_output import save_figure_pair  # noqa: E402
 from bridged.instrument import Instrument  # noqa: E402
 from validation.construct_map_granwald.run_pca import (  # noqa: E402
     DEFAULT_DATA_PATH,
@@ -279,7 +280,7 @@ def plot_map(frame: pd.DataFrame, metrics: dict[str, object], path: Path) -> Non
         color="0.35",
     )
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    save_figure_pair(figure, path)
     plt.close(figure)
 
 
@@ -318,7 +319,7 @@ def plot_pc3_groups(frame: pd.DataFrame, path: Path) -> None:
         color="0.35",
     )
     figure.tight_layout()
-    figure.savefig(path, dpi=180)
+    save_figure_pair(figure, path)
     plt.close(figure)
 
 

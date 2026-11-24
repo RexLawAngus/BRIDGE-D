@@ -252,7 +252,8 @@ projection does not determine cluster membership.
 The output includes association and distance matrices, item coordinates,
 cluster assignments, bootstrap co-assignment probabilities, a map, a
 dendrogram, projected instrument footprints, pairwise instrument distances,
-and a method report. `construct-map` remains as a compatible alias.
+and a method report. Every generated figure is written as both a 300 dpi PNG
+and a vector SVG. `construct-map` remains as a compatible alias.
 Coordinates reflect empirical response similarity in the analyzed sample.
 The two axes have no automatic psychological labels and are not estimates of
 a universal symptom space.
@@ -276,7 +277,8 @@ pairwise centroid distances, and permutation tests. The labels do not alter
 the fitted coordinates. `map-compare` uses Procrustes alignment and reports
 coordinate RMSE, aligned-axis correlations, normalized residual, and
 pairwise-distance correlation. These are stability and interpretation checks,
-not confirmatory latent-variable models.
+not confirmatory latent-variable models. Both commands write matching 300 dpi
+PNG and vector SVG figures.
 
 Reproducible validation examples are in
 [`validation/construct_map_granwald`](validation/construct_map_granwald) and
