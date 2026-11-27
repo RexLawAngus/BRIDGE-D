@@ -285,7 +285,45 @@ def main(argv: list[str] | None = None) -> int:
     p_map_compare.add_argument("--candidate", required=True)
     p_map_compare.add_argument("--out", required=True)
 
+    p_anchor = sub.add_parser("anchor-analysis", help="analyze arbitrary anchors in a fitted item map")
+    p_anchor.add_argument("--map-dir", required=True)
+    p_anchor.add_argument("--responses", required=True, help="scored response CSV with stable item IDs")
+    p_anchor.add_argument("--anchor", action="append", required=True)
+    p_anchor.add_argument("--groups", help="CSV with item/group and optional group_set")
+    p_anchor.add_argument("--positive-thresholds", help="JSON object mapping anchor IDs to thresholds")
+    p_anchor.add_argument("--top-k", type=int, default=10)
+    p_anchor.add_argument("--bootstrap", type=int, default=1000)
+    p_anchor.add_argument("--permutations", type=int, default=9999)
+    p_anchor.add_argument("--min-pairs", type=int, default=10)
+    p_anchor.add_argument("--seed", type=int, default=0)
+    p_anchor.add_argument("--plot", action="store_true")
+    p_anchor.add_argument("--out", required=True)
+
     args = parser.parse_args(argv)
+
+    if args.command == "anchor-analysis":
+        from types import SimpleNamespace
+        from .anchor_analysis import analyze_anchor_items, write_anchor_analysis, plot_anchor_neighborhood
+
+        folder = Path(args.map_dir)
+        fitted = SimpleNamespace(
+            coordinates=pd.read_csv(folder / "item_coordinates.csv"),
+            associations=pd.read_csv(folder / "item_associations.csv", index_col=0),
+            distances=pd.read_csv(folder / "item_distances.csv", index_col=0),
+            metrics=json.loads((folder / "analysis_config.json").read_text(encoding="utf-8")),
+        )
+        result = analyze_anchor_items(
+            fitted, pd.read_csv(args.responses), args.anchor,
+            groups=pd.read_csv(args.groups) if args.groups else None,
+            positive_thresholds=json.loads(args.positive_thresholds) if args.positive_thresholds else None,
+            top_k=args.top_k, bootstrap=args.bootstrap, permutations=args.permutations,
+            min_pairs=args.min_pairs, seed=args.seed,
+        )
+        written = write_anchor_analysis(result, args.out)
+        if args.plot:
+            written.extend(plot_anchor_neighborhood(fitted, result, Path(args.out) / "anchor_map"))
+        print(f"wrote {len(written)} anchor-analysis files to {args.out}")
+        return 0
 
     if args.command == "validate":
         instrument = Instrument.load(args.instrument)

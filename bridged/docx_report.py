@@ -232,7 +232,8 @@ def build_docx(
             ]
         ],
         "注：ICC(2,1) 为双向随机效应、绝对一致性、单次测量；"
-        "LoA 为 Bland-Altman 一致性界限。量程不同时 ICC 仅作描述性参考。",
+        "LoA 为 Bland-Altman 一致性界限。两者是辅助输出，解释时需要有依据的共同分数尺度。"
+        "标准化改变估计目标，不能证明原始分数可互换。",
     )
 
     subscale_rows = []
@@ -289,7 +290,7 @@ def build_docx(
         table = crosswalk.head(15)
         _add_table(
             document,
-            "表 7  等百分位链接",
+        "表 7  等百分位链接（中位百分位秩与线性分位数插值）",
             [h["score_a"], h["percentile"], h["linked_b"], h["ci_low"], h["ci_high"]],
             [
                 [

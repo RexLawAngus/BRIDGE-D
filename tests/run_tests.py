@@ -272,10 +272,18 @@ def test_phq9_prorates_one_missing_item() -> None:
 def test_phq9_prorated_total_uses_half_up_rounding() -> None:
     instrument = Instrument.load(ROOT / "instruments" / "phq9.toml")
     row = {f"phq{i}": np.nan for i in range(1, 10)}
-    row.update({"phq1": 1, "phq2": 1, "phq3": 1, "phq4": 1, "phq5": 1, "phq6": 1, "phq7": 0})
+    row.update({"phq1": 1, "phq2": 1, "phq3": 1, "phq4": 1,
+                "phq5": 0, "phq6": 0, "phq7": 0, "phq8": 0})
     scores = instrument.score(pd.DataFrame([row]))
-    # 6 * 9 / 7 = 7.714..., and the PHQ-9 rule rounds to a whole score.
-    assert scores["phq9_total"].iloc[0] == 8.0
+    # 4 * 9 / 8 = 4.5; half-up must give 5 rather than half-even's 4.
+    assert scores["phq9_total"].iloc[0] == 5.0
+
+
+def test_phq9_rejects_two_missing_items() -> None:
+    instrument = Instrument.load(ROOT / "instruments" / "phq9.toml")
+    row = {f"phq{i}": 1 for i in range(1, 10)}
+    row.update({"phq8": np.nan, "phq9": np.nan})
+    assert pd.isna(instrument.score(pd.DataFrame([row]))["phq9_total"].iloc[0])
 
 
 def test_hamd_item_16_and_17_match_standard_order() -> None:
@@ -513,6 +521,153 @@ def test_simulation_missingness_reduces_effective_n() -> None:
     )
     summary = run_simulation(config, _tmpdir("missing_sim"), n=100, replications=2)
     assert summary["mean_n_eff"] < 100
+
+
+def _anchor_fixture():
+    from bridged.construct_map import collect_item_values, fit_construct_map
+    instruments = _map_instruments()
+    data = _map_data(100)
+    fitted = fit_construct_map(instruments, data, embedding="pca", seed=4)
+    values, _ = collect_item_values(instruments, data)
+    return fitted, values
+
+
+def test_anchor_single_ranking_uses_full_space() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    fitted, values = _anchor_fixture()
+    anchor = values.columns[0]
+    fitted.coordinates["dimension_1"] = np.arange(6) * 100
+    result = analyze_anchor_items(fitted, values, [anchor], top_k=2, bootstrap=30, permutations=0, seed=4)
+    expected = fitted.associations[anchor].drop(anchor).sort_values(ascending=False).index[:2].tolist()
+    assert result.neighbors.neighbor.tolist() == expected
+    assert result.neighbors.distance_2d.min() >= 100
+    assert result.convergence.empty
+    assert result.distributions.iloc[0].n_valid == 100
+    assert result.distributions.iloc[0].positive_n == int(values[anchor].gt(0).sum())
+    assert result.neighbors.bootstrap_pair_valid.eq(30).all()
+
+
+def test_anchor_cross_scale_convergence_and_percentile() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    fitted, values = _anchor_fixture()
+    first, second = values.columns[[0, 3]]
+    result = analyze_anchor_items(fitted, values, [first, second], bootstrap=60, permutations=0, seed=5)
+    row = result.convergence.iloc[0]
+    assert len(result.convergence) == 1
+    assert row.cross_scale_pair_count == 9
+    assert abs(row.spearman_r - values[first].corr(values[second], method="spearman")) < 1e-12
+    assert abs(row.distance_1_minus_r - (1-row.spearman_r)) < 1e-12
+    assert 0 <= row.cross_scale_distance_percentile <= 100
+    assert row.r_ci_low < row.spearman_r < row.r_ci_high
+    same_scale = analyze_anchor_items(fitted, values, list(values.columns[:2]), bootstrap=0, permutations=0)
+    assert same_scale.convergence.empty
+
+
+def test_anchor_low_occurrence_counts_degenerate_resamples() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    from bridged.construct_map import collect_item_values, fit_construct_map
+    data = _map_data(80)
+    data["a1"] = 0
+    data.loc[0, "a1"] = 1
+    instruments = _map_instruments()
+    fitted = fit_construct_map(instruments, data, embedding="pca")
+    values, _ = collect_item_values(instruments, data)
+    result = analyze_anchor_items(fitted, values, [values.columns[0]], top_k=2, bootstrap=150, permutations=0, seed=3)
+    assert result.distributions.iloc[0].positive_n == 1
+    assert result.distributions.iloc[0].positive_rate == 1/80
+    valid = result.neighbors.iloc[0].bootstrap_anchor_valid
+    assert 0 < valid < 150
+    assert result.neighbors.bootstrap_pair_valid.le(150).all()
+    assert result.neighbors.top_k_stability.between(0, 1).all()
+
+
+def test_anchor_constant_and_mismatched_responses_rejected() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    fitted, values = _anchor_fixture()
+    anchor = values.columns[0]
+    for bad, message in [(values.assign(**{anchor: 0}), "constant"),
+                         (values.assign(**{anchor: values[anchor].iloc[::-1].to_numpy()}), "do not match")]:
+        try:
+            analyze_anchor_items(fitted, bad, [anchor], bootstrap=0)
+        except ValueError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError("invalid responses accepted")
+
+
+def test_anchor_groups_exclude_all_anchors_and_seed_reproduces() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    fitted, values = _anchor_fixture()
+    anchors = list(values.columns[:2])
+    labels = pd.DataFrame({"item": values.columns, "group": ["left"]*3+["right"]*3})
+    result = analyze_anchor_items(fitted, values, anchors, groups=labels, bootstrap=10, permutations=49, seed=7)
+    again = analyze_anchor_items(fitted, values, anchors, groups=labels, bootstrap=10, permutations=49, seed=7)
+    pd.testing.assert_frame_equal(result.groups, again.groups)
+    pd.testing.assert_frame_equal(result.neighbors, again.neighbors)
+    assert result.groups.permutation_pool_n.eq(4).all()
+    assert set(result.groups.n_items) == {1, 3}
+    assert result.groups.p_mean_distance.between(.02, 1).all()
+    all_one = labels.assign(group="all")
+    null = analyze_anchor_items(fitted, values, anchors, groups=all_one, bootstrap=0, permutations=19)
+    assert null.groups.p_mean_distance.eq(1).all()
+    assert null.groups.p_centroid_2d.eq(1).all()
+
+
+def test_anchor_bootstrap_identical_items_and_threshold() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    from bridged.construct_map import collect_item_values, fit_construct_map
+    instruments = _map_instruments()
+    data = _map_data(100)
+    data["b1"] = data.a1
+    fitted = fit_construct_map(instruments, data, embedding="pca")
+    values, _ = collect_item_values(instruments, data)
+    anchor = values.columns[0]
+    result = analyze_anchor_items(fitted, values, [anchor], top_k=1, bootstrap=40,
+                                  permutations=0, positive_thresholds={anchor: 1})
+    row = result.neighbors.iloc[0]
+    assert row.neighbor == values.columns[3]
+    assert abs(row.r_ci_low - 1) < 1e-12
+    assert row.top_k_stability == 1
+    assert result.distributions.iloc[0].positive_n == int(data.a1.gt(1).sum())
+
+
+def test_anchor_export_cli_and_plot() -> None:
+    import json
+    from bridged.anchor_analysis import analyze_anchor_items, write_anchor_analysis, plot_anchor_neighborhood
+    from bridged.cli import main as cli_main
+    fitted, values = _anchor_fixture()
+    anchor = values.columns[0]
+    result = analyze_anchor_items(fitted, values, [anchor], bootstrap=0, permutations=0)
+    out = _tmpdir("anchor_outputs")
+    paths = write_anchor_analysis(result, out)
+    payload = json.loads((out / "anchor_analysis.json").read_text(encoding="utf-8"))
+    assert len(paths) == 5
+    assert payload["neighbors"][0]["r_ci_low"] is None
+    assert list(pd.read_csv(out / "anchor_convergence.csv"))
+    assert all(p.exists() for p in plot_anchor_neighborhood(fitted, result, out / "highlight"))
+    fitted.coordinates.to_csv(out / "item_coordinates.csv", index=False)
+    fitted.associations.to_csv(out / "item_associations.csv")
+    fitted.distances.to_csv(out / "item_distances.csv")
+    (out / "analysis_config.json").write_text(json.dumps(fitted.metrics), encoding="utf-8")
+    values.to_csv(out / "responses.csv", index=False)
+    assert cli_main(["anchor-analysis", "--map-dir", str(out), "--responses", str(out / "responses.csv"),
+                     "--anchor", anchor, "--bootstrap", "0", "--permutations", "0", "--out", str(out / "cli")]) == 0
+    cli = json.loads((out / "cli/anchor_analysis.json").read_text(encoding="utf-8"))
+    assert cli["neighbors"] == payload["neighbors"]
+
+
+def test_anchor_missing_responses_use_paired_counts() -> None:
+    from bridged.anchor_analysis import analyze_anchor_items
+    from bridged.construct_map import collect_item_values, fit_construct_map
+    data = _map_data(100)
+    data.loc[:9, "a1"] = np.nan
+    instruments = _map_instruments()
+    fitted = fit_construct_map(instruments, data, embedding="pca")
+    values, _ = collect_item_values(instruments, data)
+    result = analyze_anchor_items(fitted, values, [values.columns[0]], bootstrap=15, permutations=0)
+    assert result.distributions.iloc[0].n_valid == 90
+    assert result.distributions.iloc[0].n_missing == 10
+    assert result.neighbors.pairwise_n.eq(90).all()
 
 
 def main() -> int:

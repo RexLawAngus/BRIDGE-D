@@ -1,13 +1,13 @@
 id = "phq9"
 name = "Patient Health Questionnaire-9"
-version = "1.0.0"
+version = "1.1.0"
 language = "en"
 rater = "self"
 recall = "past 2 weeks"
 license = "public-domain"
 citation = "Kroenke K, Spitzer RL, Williams JB. J Gen Intern Med. 2001;16(9):606-613."
-source = "Kroenke et al. 2001"
-validation = "source-verified"
+source = "Kroenke et al. 2001 (item content); BRIDGE-D scoring policy"
+validation = "numerically-checked"
 
 [response_scales.phq_0_3]
 levels = [0, 1, 2, 3]
@@ -73,7 +73,9 @@ response = "phq_0_3"
 text = "Thoughts that you would be better off dead or of hurting yourself"
 
 [scoring]
-missing_min_answered = 7
+# BRIDGE-D policy: prorate at most one missing item. This is a project
+# default, rather than a claim about the original publication's instructions.
+missing_min_answered = 8
 missing_strategy = "prorate"
 
 [scoring.total]

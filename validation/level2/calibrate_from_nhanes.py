@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_XPT = Path(r"F:\科研\5.抑郁量表基础设施\库\公开数据集\DPQ_J.XPT")
+DEFAULT_XPT = Path("DPQ_J.XPT")
 ITEMS = [f"DPQ{i:02d}0" for i in range(1, 10)]
 NORMAL = NormalDist()
 

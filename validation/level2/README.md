@@ -25,7 +25,7 @@ sample sizes, latent correlations and missingness mechanisms.
 - `bias_mech`: mean estimate minus the mechanism-specific truth (estimation
   bias after the missingness-induced shift).
 - `rmse_r`: root mean squared error against the no-missing truth.
-- `coverage_r`: share of 95% Fisher intervals containing the mechanism-specific
+- `coverage_r`: share of nominal 95% Fisher intervals containing the mechanism-specific
   truth.
 - `mean_ci_width`: average interval width.
 - `crosswalk_rmse`: error of the estimated equipercentile link over the
@@ -73,6 +73,25 @@ The full table is in `summary.csv`; per-replication results are in
 python validation/level2/calibrate_from_nhanes.py   # needs DPQ_J.XPT
 python validation/level2/run_grid.py
 ```
+
+To compare Fisher and paired percentile bootstrap intervals on exactly the
+same generated datasets, use a new output directory:
+
+```bash
+python validation/level2/compare_intervals.py --out /path/to/new/interval_outputs
+```
+
+The comparison uses 1,999 bootstrap draws of complete participant pairs and
+records failures, conditional and unconditional coverage, Monte Carlo standard
+errors, widths, and timings. `audit.json` also checks reproduction of the
+existing Fisher baseline. Its replacement gates are project-specific screening
+criteria, not universal statistical acceptance thresholds. A nominal 95% level
+does not guarantee 95% coverage in these conditions.
+
+The simulated minimum-answered rules (7/9 and 10/12, fractional prorated totals)
+are explicit stress-test settings. The supplied PHQ-9 definition separately
+uses a conservative project policy of 8/9 with half-up rounding. The definition
+does not attribute that missing-data policy to the original PHQ-9 publication.
 
 ## Limits
 

@@ -19,3 +19,5 @@ validation/construct_map_*/output*/
 demo_report.docx
 validation/level2/DPQ_J.XPT
 *.XPT
+
+validation/anchor_use_case/outputs/

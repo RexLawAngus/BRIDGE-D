@@ -122,6 +122,8 @@ def equipercentile(
 
     Both series must come from the *same* subjects. Returns one row per
     observed score of A with the linked B score at the same mid-percentile.
+    The convention is mid-percentile rank followed by NumPy's linear target
+    quantile interpolation. It differs from equate's half-interval convention.
     """
     a, b = pairwise_complete(a, b)
     a_values = a.to_numpy(float)
